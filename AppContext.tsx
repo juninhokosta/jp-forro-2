@@ -37,12 +37,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('jp_quotes', JSON.stringify(quotes));
   }, [currentUser, transactions, serviceOrders, quotes]);
 
-  const login = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (user) setCurrentUser(user);
+  const login = (emailOrId: string) => {
+    // Busca por email (Google Auth) ou ID (Fallback)
+    const user = users.find(u => u.email === emailOrId || u.id === emailOrId);
+    if (user) {
+      setCurrentUser(user);
+    } else {
+      console.error("Usuário não autorizado.");
+    }
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('jp_user');
+  };
 
   const addTransaction = (t: Omit<Transaction, 'id' | 'userId' | 'userName'>) => {
     if (!currentUser) return;
@@ -55,7 +63,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTransactions(prev => [newTransaction, ...prev]);
   };
 
-  // Fix: Generate createdAt internally and update the type to match AppContextType
   const addOS = (os: Omit<ServiceOrder, 'id' | 'transactions' | 'progress' | 'createdAt'>) => {
     const newOS: ServiceOrder = {
       ...os,
