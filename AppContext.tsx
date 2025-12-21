@@ -1,11 +1,10 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus } from './types';
+import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem } from './types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Estado para armazenar os 2 usuários permitidos na sociedade
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('jp_authorized_users');
     return saved ? JSON.parse(saved) : [];
@@ -31,22 +30,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [catalog, setCatalog] = useState<CatalogItem[]>(() => {
+    const saved = localStorage.getItem('jp_catalog');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', name: 'Mão de Obra Forro PVC', price: 25, type: 'SERVICE' },
+      { id: '2', name: 'Mão de Obra Drywall', price: 35, type: 'SERVICE' },
+      { id: '3', name: 'Perfil Canaleta', price: 15.50, type: 'PRODUCT' },
+      { id: '4', name: 'Placa de Gesso', price: 45, type: 'PRODUCT' }
+    ];
+  });
+
   useEffect(() => {
     localStorage.setItem('jp_authorized_users', JSON.stringify(users));
     localStorage.setItem('jp_user', JSON.stringify(currentUser));
     localStorage.setItem('jp_transactions', JSON.stringify(transactions));
     localStorage.setItem('jp_os', JSON.stringify(serviceOrders));
     localStorage.setItem('jp_quotes', JSON.stringify(quotes));
-  }, [users, currentUser, transactions, serviceOrders, quotes]);
+    localStorage.setItem('jp_catalog', JSON.stringify(catalog));
+  }, [users, currentUser, transactions, serviceOrders, quotes, catalog]);
 
   const login = (emailOrId: string, name?: string) => {
     const email = emailOrId.toLowerCase();
-    
-    // Verifica se o usuário já existe
     let user = users.find(u => u.email.toLowerCase() === email || u.id === emailOrId);
     
     if (!user) {
-      // Se não existe, tenta criar se houver vaga (máximo 2)
       if (users.length < 2) {
         const newUser: User = {
           id: Math.random().toString(36).substr(2, 9),
@@ -80,30 +87,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTransactions(prev => [newTransaction, ...prev]);
   };
 
-  const addOS = (os: Omit<ServiceOrder, 'id' | 'transactions' | 'progress' | 'createdAt'>) => {
+  const updateTransaction = (id: string, t: Partial<Transaction>) => {
+    setTransactions(prev => prev.map(item => item.id === id ? { ...item, ...t } : item));
+  };
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(item => item.id !== id));
+  };
+
+  const addOS = (os: Omit<ServiceOrder, 'id' | 'progress' | 'createdAt'>) => {
     const newOS: ServiceOrder = {
       ...os,
       id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-      transactions: [],
       progress: 0,
       createdAt: new Date().toISOString(),
     };
     setServiceOrders(prev => [newOS, ...prev]);
   };
 
+  const updateOS = (id: string, updates: Partial<ServiceOrder>) => {
+    setServiceOrders(prev => prev.map(os => os.id === id ? { ...os, ...updates } : os));
+  };
+
   const updateOSStatus = (id: string, status: OSStatus) => {
     setServiceOrders(prev => prev.map(os => {
         if (os.id === id) {
-            let progress = 0;
+            let progress = os.progress;
             if (status === OSStatus.QUOTED) progress = 10;
             if (status === OSStatus.APPROVED) progress = 30;
             if (status === OSStatus.IN_PROGRESS) progress = 60;
-            if (status === OSStatus.FINISHED) progress = 90;
+            if (status === OSStatus.FINISHED) progress = 100;
             if (status === OSStatus.PAID) progress = 100;
             return { ...os, status, progress };
         }
         return os;
     }));
+  };
+
+  const createOSFromQuote = (quote: Quote) => {
+    const newOS: ServiceOrder = {
+      id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+      quoteId: quote.id,
+      customerName: quote.customerName,
+      customerContact: quote.customerContact,
+      description: `Serviço originado do Orçamento ${quote.id}. Itens: ` + quote.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+      status: OSStatus.APPROVED,
+      progress: 30,
+      createdAt: new Date().toISOString(),
+      expectedDate: new Date().toISOString().split('T')[0],
+      totalValue: quote.total
+    };
+    setServiceOrders(prev => [newOS, ...prev]);
+    updateQuoteStatus(quote.id, 'APPROVED');
   };
 
   const addQuote = (q: Omit<Quote, 'id' | 'createdAt' | 'status'>) => {
@@ -120,12 +155,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
   };
 
+  const addCatalogItem = (item: Omit<CatalogItem, 'id'>) => {
+    const newItem = { ...item, id: Math.random().toString(36).substr(2, 9) };
+    setCatalog(prev => [...prev, newItem]);
+  };
+
+  const removeCatalogItem = (id: string) => {
+    setCatalog(prev => prev.filter(item => item.id !== id));
+  };
+
   return (
     <AppContext.Provider value={{ 
       currentUser, users, login, logout, 
-      transactions, addTransaction, 
-      serviceOrders, addOS, updateOSStatus,
-      quotes, addQuote, updateQuoteStatus 
+      transactions, addTransaction, updateTransaction, deleteTransaction,
+      serviceOrders, addOS, updateOS, updateOSStatus, createOSFromQuote,
+      quotes, addQuote, updateQuoteStatus,
+      catalog, addCatalogItem, removeCatalogItem
     }}>
       {children}
     </AppContext.Provider>
