@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../AppContext';
-import { ShieldAlert, LogInIcon, Info } from 'lucide-react';
+import { ShieldAlert, LogInIcon, Mail, Key, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 
 declare const google: any;
 
@@ -9,31 +9,69 @@ const Login: React.FC = () => {
   const { users, login } = useApp();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Estados para fluxo de e-mail
+  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [sentCode, setSentCode] = useState('');
+
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.includes('@')) {
+      setError("Por favor, insira um e-mail válido.");
+      return;
+    }
+
+    // Verifica se já temos 2 usuários e se este e-mail é um deles
+    const isAlreadyUser = users.some(u => u.email.toLowerCase() === email.toLowerCase());
+    if (users.length >= 2 && !isAlreadyUser) {
+      setError("Acesso negado. Esta sociedade já possui os 2 membros cadastrados.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
+    // Simula envio de e-mail
+    setTimeout(() => {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setSentCode(code);
+      setStep('code');
+      setLoading(false);
+      // Em um app real, o código iria para o e-mail. Aqui mostramos na tela para teste.
+    }, 1000);
+  };
+
+  const handleCodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verificationCode === sentCode) {
+      setLoading(true);
+      try {
+        login(email);
+      } catch (err: any) {
+        setError(err.message);
+        setLoading(false);
+      }
+    } else {
+      setError("Código incorreto. Tente novamente.");
+    }
+  };
 
   useEffect(() => {
-    const handleCredentialResponse = (response: any) => {
+    const handleGoogleResponse = (response: any) => {
       setLoading(true);
       try {
         const base64Url = response.credential.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join(''));
 
         const payload = JSON.parse(jsonPayload);
-        const email = payload.email.toLowerCase();
-
-        // Verifica se o email é um dos permitidos (ignora case)
-        const isAuthorized = users.some(u => u.email.toLowerCase() === email);
-
-        if (isAuthorized) {
-          login(email);
-        } else {
-          setError(`O email ${email} não está na lista de sócios autorizados.`);
-        }
-      } catch (err) {
-        console.error("Erro no login", err);
-        setError("Erro ao processar os dados do Google.");
+        login(payload.email, payload.name);
+      } catch (err: any) {
+        setError(err.message || "Erro ao processar login Google.");
       } finally {
         setLoading(false);
       }
@@ -42,75 +80,121 @@ const Login: React.FC = () => {
     if (typeof google !== 'undefined') {
       google.accounts.id.initialize({
         client_id: "847668633758-csq0p6v6e297oaq6e0e980e98e98e98.apps.googleusercontent.com",
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true
+        callback: handleGoogleResponse
       });
-
       google.accounts.id.renderButton(
         document.getElementById("googleBtn"),
-        { 
-          theme: "outline", 
-          size: "large", 
-          width: 280, 
-          text: "signin_with", 
-          shape: "pill",
-          logo_alignment: "left"
-        }
+        { theme: "outline", size: "large", width: 320, shape: "pill" }
       );
     }
-  }, [users, login]);
+  }, [login]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-900 px-4">
-      <div className="bg-white/95 backdrop-blur-md p-8 rounded-[2rem] shadow-2xl w-full max-w-sm space-y-8 border border-white/20">
-        <div className="text-center space-y-4">
-          <div className="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-950 px-4">
+      <div className="bg-white/95 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm space-y-8 border border-white/20 relative overflow-hidden">
+        
+        <div className="text-center space-y-3 relative">
+          <div className="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/30">
             <LogInIcon className="w-8 h-8 text-white" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">JP Forro</h1>
-            <p className="text-blue-600 font-bold uppercase tracking-widest text-[10px]">Gestão Financeira</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">JP Forro</h1>
+            <p className="text-blue-600 font-bold uppercase tracking-[0.2em] text-[10px]">Gestão Financeira</p>
           </div>
-          <p className="text-slate-500 text-sm">Acesso restrito aos sócios administradores</p>
         </div>
 
-        <div className="flex flex-col items-center gap-6 py-2">
-          <div id="googleBtn" className={`transition-opacity ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}></div>
-          
+        <div className="space-y-6">
+          {step === 'email' ? (
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input 
+                  type="email"
+                  placeholder="Seu e-mail"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                  required
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continuar <ArrowRight className="w-4 h-4" /></>}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleCodeSubmit} className="space-y-4 animate-in fade-in slide-in-from-right-4">
+              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                    <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">Código Enviado</p>
+                    <p className="text-[12px] text-blue-700 leading-tight">Para testar, use o código: <span className="font-black text-blue-900">{sentCode}</span></p>
+                </div>
+              </div>
+              <div className="relative">
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input 
+                  type="text"
+                  placeholder="Código de 6 dígitos"
+                  maxLength={6}
+                  value={verificationCode}
+                  onChange={e => setVerificationCode(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-center tracking-[0.5em] font-bold text-lg"
+                  required
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verificar e Entrar"}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setStep('email')}
+                className="w-full text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors"
+              >
+                Alterar E-mail
+              </button>
+            </form>
+          )}
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+            <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest"><span className="bg-white/95 px-3 text-slate-400">Ou use o Google</span></div>
+          </div>
+
+          <div className="flex justify-center">
+            <div id="googleBtn" className={loading ? 'opacity-30 pointer-events-none' : ''}></div>
+          </div>
+
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
-              <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-rose-600 font-semibold leading-tight">{error}</p>
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+              <ShieldAlert className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-rose-700 font-medium leading-relaxed">{error}</p>
             </div>
           )}
         </div>
 
-        <div className="pt-6 border-t border-slate-100">
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2 text-slate-400">
-                <Info className="w-3 h-3" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Acesso Rápido (Sócios)</span>
-            </div>
-            
-            <div className="flex justify-center gap-4">
-              {users.map(user => (
-                <button 
-                  key={user.id}
-                  onClick={() => login(user.id)}
-                  className="group flex flex-col items-center gap-2 focus:outline-none"
-                >
-                  <div className="w-12 h-12 rounded-full border-2 border-slate-100 overflow-hidden shadow-sm transition-all group-hover:border-blue-500 group-hover:scale-110 group-active:scale-95">
-                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-500 group-hover:text-blue-600">{user.name.split(' ')[0]}</span>
-                </button>
-              ))}
-            </div>
+        <div className="pt-2 text-center border-t border-slate-100 pt-6">
+          <div className="flex justify-center gap-2 mb-3">
+             {users.map(u => (
+               <div key={u.id} className="w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden" title={u.name}>
+                 <img src={u.avatar} alt={u.name} />
+               </div>
+             ))}
+             {users.length < 2 && (
+               <div className="w-8 h-8 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-[10px] text-slate-300 font-bold">
+                 +
+               </div>
+             )}
           </div>
-          
-          <p className="text-center text-[9px] text-slate-400 mt-8 italic">
-            Sociedade 50/50 • © 2024 JP Forro
+          <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">
+            {users.length}/2 Usuários na Sociedade
           </p>
         </div>
       </div>

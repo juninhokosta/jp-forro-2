@@ -59,7 +59,8 @@ export interface ServiceOrder {
 export interface AppContextType {
   currentUser: User | null;
   users: User[];
-  login: (userId: string) => void;
+  // Fix: Update login signature to allow optional name parameter
+  login: (userId: string, name?: string) => void;
   logout: () => void;
   transactions: Transaction[];
   addTransaction: (t: Omit<Transaction, 'id' | 'userId' | 'userName'>) => void;

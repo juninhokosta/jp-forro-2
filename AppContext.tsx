@@ -5,10 +5,11 @@ import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus } from
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const users: User[] = [
-    { id: '1', name: 'João Paulo', email: 'joao@jpforro.com', avatar: 'https://picsum.photos/seed/joao/100/100' },
-    { id: '2', name: 'Sócio Parceiro', email: 'socio@jpforro.com', avatar: 'https://picsum.photos/seed/socio/100/100' }
-  ];
+  // Estado para armazenar os 2 usuários permitidos na sociedade
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('jp_authorized_users');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('jp_user');
@@ -31,19 +32,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   useEffect(() => {
+    localStorage.setItem('jp_authorized_users', JSON.stringify(users));
     localStorage.setItem('jp_user', JSON.stringify(currentUser));
     localStorage.setItem('jp_transactions', JSON.stringify(transactions));
     localStorage.setItem('jp_os', JSON.stringify(serviceOrders));
     localStorage.setItem('jp_quotes', JSON.stringify(quotes));
-  }, [currentUser, transactions, serviceOrders, quotes]);
+  }, [users, currentUser, transactions, serviceOrders, quotes]);
 
-  const login = (emailOrId: string) => {
-    // Busca por email (Google Auth) ou ID (Fallback)
-    const user = users.find(u => u.email === emailOrId || u.id === emailOrId);
-    if (user) {
-      setCurrentUser(user);
+  const login = (emailOrId: string, name?: string) => {
+    const email = emailOrId.toLowerCase();
+    
+    // Verifica se o usuário já existe
+    let user = users.find(u => u.email.toLowerCase() === email || u.id === emailOrId);
+    
+    if (!user) {
+      // Se não existe, tenta criar se houver vaga (máximo 2)
+      if (users.length < 2) {
+        const newUser: User = {
+          id: Math.random().toString(36).substr(2, 9),
+          email: email,
+          name: name || email.split('@')[0],
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+        };
+        setUsers(prev => [...prev, newUser]);
+        setCurrentUser(newUser);
+      } else {
+        throw new Error("Limite de 2 usuários atingido para esta sociedade.");
+      }
     } else {
-      console.error("Usuário não autorizado.");
+      setCurrentUser(user);
     }
   };
 
