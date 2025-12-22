@@ -8,7 +8,6 @@ import { OSStatus } from '../types';
 const Dashboard: React.FC = () => {
   const { transactions, serviceOrders, users } = useApp();
 
-  // Filter current month
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -24,7 +23,6 @@ const Dashboard: React.FC = () => {
     return acc;
   }, { income: 0, expense: 0 });
 
-  // Calc by user
   const userStats = users.map(u => {
     const uTransactions = currentMonthTransactions.filter(t => t.userId === u.id);
     const income = uTransactions.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
@@ -48,69 +46,69 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-emerald-600" />
+      {/* KPI Cards Responsivos: 2 colunas no mobile, 4 no desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="p-1.5 md:p-2 bg-emerald-50 rounded-lg">
+              <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-emerald-600" />
             </div>
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">+12%</span>
+            <span className="text-[9px] md:text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
           </div>
-          <p className="text-slate-500 text-sm font-medium">Entradas (Mês)</p>
-          <h3 className="text-2xl font-bold text-slate-900 mt-1">{formatCurrency(totals.income)}</h3>
+          <p className="text-slate-500 text-[10px] md:text-sm font-black uppercase tracking-tighter">Entradas</p>
+          <h3 className="text-lg md:text-2xl font-black text-slate-900 mt-1 truncate">{formatCurrency(totals.income)}</h3>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-rose-50 rounded-lg">
-              <TrendingDown className="w-6 h-6 text-rose-600" />
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="p-1.5 md:p-2 bg-rose-50 rounded-lg">
+              <TrendingDown className="w-4 h-4 md:w-6 md:h-6 text-rose-600" />
             </div>
-            <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-1 rounded-full">-5%</span>
+            <span className="text-[9px] md:text-xs font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">-5%</span>
           </div>
-          <p className="text-slate-500 text-sm font-medium">Saídas (Mês)</p>
-          <h3 className="text-2xl font-bold text-slate-900 mt-1">{formatCurrency(totals.expense)}</h3>
+          <p className="text-slate-500 text-[10px] md:text-sm font-black uppercase tracking-tighter">Saídas</p>
+          <h3 className="text-lg md:text-2xl font-black text-slate-900 mt-1 truncate">{formatCurrency(totals.expense)}</h3>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Wallet className="w-6 h-6 text-blue-600" />
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="p-1.5 md:p-2 bg-blue-50 rounded-lg">
+              <Wallet className="w-4 h-4 md:w-6 md:h-6 text-blue-600" />
             </div>
           </div>
-          <p className="text-slate-500 text-sm font-medium">Saldo Disponível</p>
-          <h3 className="text-2xl font-bold text-slate-900 mt-1">{formatCurrency(totals.income - totals.expense)}</h3>
+          <p className="text-slate-500 text-[10px] md:text-sm font-black uppercase tracking-tighter">Saldo</p>
+          <h3 className="text-lg md:text-2xl font-black text-slate-900 mt-1 truncate">{formatCurrency(totals.income - totals.expense)}</h3>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-amber-50 rounded-lg">
-              <Clock className="w-6 h-6 text-amber-600" />
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="p-1.5 md:p-2 bg-amber-50 rounded-lg">
+              <Clock className="w-4 h-4 md:w-6 md:h-6 text-amber-600" />
             </div>
           </div>
-          <p className="text-slate-500 text-sm font-medium">OS Ativas</p>
-          <h3 className="text-2xl font-bold text-slate-900 mt-1">{osCounts.active}</h3>
+          <p className="text-slate-500 text-[10px] md:text-sm font-black uppercase tracking-tighter">Ativas</p>
+          <h3 className="text-lg md:text-2xl font-black text-slate-900 mt-1">{osCounts.active}</h3>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Charts Section */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+        {/* Charts Section: Oculto ou simplificado no mobile se necessário, mas Recharts é responsivo */}
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <h3 className="text-base md:text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-500" />
-            Divisão por Usuário
+            Sociedade
           </h3>
-          <div className="h-80">
+          <div className="h-64 md:h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
                 <Tooltip 
                   cursor={{fill: '#f8fafc'}}
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
+                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px'}}
                 />
-                <Legend iconType="circle" />
+                <Legend iconType="circle" wrapperStyle={{fontSize: '10px'}} />
                 <Bar dataKey="Entrada" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Saída" fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -118,57 +116,33 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Latest Activities */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        {/* Atividades Recentes: Mais compacto no mobile */}
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-800">Atividades Recentes</h3>
-            <button className="text-sm text-blue-600 font-semibold hover:underline">Ver tudo</button>
+            <h3 className="text-base md:text-lg font-black text-slate-800">Recentes</h3>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {currentMonthTransactions.length === 0 && (
-                <p className="text-center text-slate-500 py-10">Nenhuma movimentação este mês.</p>
+                <p className="text-center text-slate-500 py-10 text-xs">Nenhuma movimentação.</p>
             )}
             {currentMonthTransactions.slice(0, 5).map(t => (
-              <div key={t.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${t.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                    {t.type === 'INCOME' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+              <div key={t.id} className="flex items-center justify-between p-2 md:p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`p-1.5 md:p-2 rounded-lg shrink-0 ${t.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                    {t.type === 'INCOME' ? <TrendingUp className="w-4 h-4 md:w-5 md:h-5" /> : <TrendingDown className="w-4 h-4 md:w-5 md:h-5" />}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{t.description}</p>
-                    <p className="text-xs text-slate-500">{t.userName} • {new Date(t.date).toLocaleDateString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs md:text-sm font-black text-slate-800 truncate">{t.description}</p>
+                    <p className="text-[9px] md:text-xs text-slate-500 truncate">{t.userName} • {new Date(t.date).toLocaleDateString()}</p>
                   </div>
                 </div>
-                <p className={`font-bold ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {t.type === 'INCOME' ? '+' : '-'} {formatCurrency(t.amount)}
+                <p className={`font-black text-xs md:text-sm shrink-0 ml-2 ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                   {formatCurrency(t.amount)}
                 </p>
               </div>
             ))}
           </div>
         </div>
-      </div>
-
-      {/* OS Summary */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Status das Ordens de Serviço</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.values(OSStatus).map(status => {
-                  const count = serviceOrders.filter(os => os.status === status).length;
-                  return (
-                      <div key={status} className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
-                          <div>
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{status}</p>
-                              <p className="text-xl font-bold text-slate-900">{count}</p>
-                          </div>
-                          <div className={`w-2 h-2 rounded-full ${
-                              status === OSStatus.PAID ? 'bg-emerald-500' : 
-                              status === OSStatus.FINISHED ? 'bg-blue-500' :
-                              status === OSStatus.IN_PROGRESS ? 'bg-amber-500' : 'bg-slate-400'
-                          }`} />
-                      </div>
-                  );
-              })}
-          </div>
       </div>
     </div>
   );

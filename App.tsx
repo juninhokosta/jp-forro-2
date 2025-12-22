@@ -9,6 +9,34 @@ import ServiceOrders from './components/ServiceOrders';
 import Quotes from './components/Quotes';
 import Reports from './components/Reports';
 import Login from './components/Login';
+import { LayoutDashboard, Briefcase, Receipt, FileText, PieChart } from 'lucide-react';
+
+const BottomNav: React.FC<{ activeTab: string; setActiveTab: (tab: string) => void }> = ({ activeTab, setActiveTab }) => {
+  const menuItems = [
+    { id: 'dashboard', label: 'Início', icon: LayoutDashboard },
+    { id: 'os', label: 'OS', icon: Briefcase },
+    { id: 'expenses', label: 'Gasto', icon: Receipt },
+    { id: 'quotes', label: 'Orc.', icon: FileText },
+    { id: 'reports', label: 'Relat.', icon: PieChart },
+  ];
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-2 flex justify-around items-center z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+      {menuItems.map(item => (
+        <button
+          key={item.id}
+          onClick={() => setActiveTab(item.id)}
+          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+            activeTab === item.id ? 'text-blue-600 bg-blue-50' : 'text-slate-400'
+          }`}
+        >
+          <item.icon className="w-5 h-5" />
+          <span className="text-[10px] font-black uppercase tracking-tighter">{item.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
 
 const MainLayout: React.FC = () => {
   const { currentUser } = useApp();
@@ -28,13 +56,16 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 overflow-x-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
         <Header activeTab={activeTab} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-          {renderContent()}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
         </main>
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
     </div>
   );
