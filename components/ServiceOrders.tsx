@@ -6,7 +6,7 @@ import {
   Plus, CheckCircle2, Clock, DollarSign, User, 
   Settings, Trash2, X, ClipboardList, MapPin, Phone, Fuel, ShoppingCart, 
   Utensils, Coffee, ChevronRight, TrendingUp, TrendingDown, LayoutList, Edit3, HardHat,
-  ArrowRight, Calculator
+  ArrowRight, Calculator, Soup, PlusCircle
 } from 'lucide-react';
 
 const ServiceOrders: React.FC = () => {
@@ -229,20 +229,20 @@ const ServiceOrders: React.FC = () => {
       <div className="space-y-6 animate-in fade-in duration-300 pb-10">
         {quickInput.show && (
           <div className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
-            <form onSubmit={handleQuickInputSubmit} className="bg-white rounded-[2.5rem] p-10 w-full max-md shadow-2xl animate-in zoom-in-95 duration-200">
-              <div className="flex justify-between items-center mb-8">
+            <form onSubmit={handleQuickInputSubmit} className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter">{quickInput.category}</h4>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Lançar {quickInput.type === 'INCOME' ? 'Entrada' : 'Despesa'}</p>
+                  <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">{quickInput.category}</h4>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Lançar {quickInput.type === 'INCOME' ? 'Entrada' : 'Despesa'}</p>
                 </div>
-                <button type="button" onClick={() => setQuickInput({ ...quickInput, show: false })} className="p-3 hover:bg-slate-100 rounded-full transition-colors"><X className="w-6 h-6 text-slate-400" /></button>
+                <button type="button" onClick={() => setQuickInput({ ...quickInput, show: false })} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><X className="w-6 h-6" /></button>
               </div>
               <div className="space-y-6">
                 <div className="relative">
-                   <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-2xl text-slate-400">R$</span>
-                   <input autoFocus type="number" step="0.01" required value={quickInput.value} onChange={e => setQuickInput({ ...quickInput, value: e.target.value })} className="w-full pl-20 pr-6 py-6 bg-slate-50 border-2 border-slate-100 rounded-3xl outline-none focus:border-blue-500 font-black text-4xl text-slate-800 transition-all" placeholder="0,00" />
+                   <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl text-slate-400">R$</span>
+                   <input autoFocus type="number" step="0.01" required value={quickInput.value} onChange={e => setQuickInput({ ...quickInput, value: e.target.value })} className="w-full pl-16 pr-6 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-black text-3xl text-slate-800 transition-all" placeholder="0,00" />
                 </div>
-                <button type="submit" className="w-full py-6 bg-blue-600 text-white rounded-3xl font-black text-lg shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-95 transition-all">Confirmar Lançamento <ArrowRight className="w-6 h-6" /></button>
+                <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-base shadow-xl shadow-blue-500/30 flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-95 transition-all">Confirmar Lançamento <ArrowRight className="w-5 h-5" /></button>
               </div>
             </form>
           </div>
@@ -286,15 +286,39 @@ const ServiceOrders: React.FC = () => {
             </div>
           </div>
           <div className="space-y-8">
-            <div className="bg-slate-900 text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 mb-8 flex items-center gap-2"><Settings className="w-4 h-4" /> REGISTRAR DESPESA</h4>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <button onClick={() => openQuickInput(selectedOS.id, 'Combustível')} className="flex flex-col items-center gap-3 p-6 bg-white/5 rounded-[2rem] hover:bg-white/10 transition-all border border-white/5 group active:scale-95"><Fuel className="w-8 h-8 text-amber-400" /><span className="text-[10px] font-black uppercase text-slate-400">Combustível</span></button>
-                <button onClick={() => openQuickInput(selectedOS.id, 'Material')} className="flex flex-col items-center gap-3 p-6 bg-white/5 rounded-[2rem] hover:bg-white/10 transition-all border border-white/5 group active:scale-95"><ShoppingCart className="w-8 h-8 text-blue-400" /><span className="text-[10px] font-black uppercase text-slate-400">Material</span></button>
+            <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-6 flex items-center gap-2"><Settings className="w-4 h-4" /> REGISTRAR DESPESA</h4>
+              
+              <div className="grid grid-cols-3 gap-3 mb-8">
+                <button onClick={() => openQuickInput(selectedOS.id, 'Combustível')} className="flex flex-col items-center gap-2 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5 group active:scale-95">
+                  <Fuel className="w-5 h-5 text-amber-400" />
+                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Combust.</span>
+                </button>
+                <button onClick={() => openQuickInput(selectedOS.id, 'Material')} className="flex flex-col items-center gap-2 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5 group active:scale-95">
+                  <ShoppingCart className="w-5 h-5 text-blue-400" />
+                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Material</span>
+                </button>
+                <button onClick={() => openQuickInput(selectedOS.id, 'Almoço')} className="flex flex-col items-center gap-2 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5 group active:scale-95">
+                  <Utensils className="w-5 h-5 text-emerald-400" />
+                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Almoço</span>
+                </button>
+                <button onClick={() => openQuickInput(selectedOS.id, 'Lanche')} className="flex flex-col items-center gap-2 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5 group active:scale-95">
+                  <Coffee className="w-5 h-5 text-orange-400" />
+                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Lanche</span>
+                </button>
+                <button onClick={() => openQuickInput(selectedOS.id, 'Jantar')} className="flex flex-col items-center gap-2 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5 group active:scale-95">
+                  <Soup className="w-5 h-5 text-indigo-400" />
+                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Jantar</span>
+                </button>
+                <button onClick={() => openQuickInput(selectedOS.id, 'Outros')} className="flex flex-col items-center gap-2 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5 group active:scale-95">
+                  <PlusCircle className="w-5 h-5 text-slate-400" />
+                  <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">Outros</span>
+                </button>
               </div>
+
               <div className="space-y-4">
-                <button onClick={() => openQuickInput(selectedOS.id, 'Entrada', 'INCOME')} className="w-full bg-emerald-600 py-6 rounded-3xl font-black text-base flex items-center justify-center gap-4 hover:bg-emerald-700 active:scale-95 transition-all shadow-xl shadow-emerald-900/30"><DollarSign className="w-6 h-6" /> Registrar Entrada $</button>
-                {selectedOS.status !== OSStatus.PAID && <button onClick={() => updateOSStatus(selectedOS.id, OSStatus.FINISHED)} className="w-full bg-blue-600 py-6 rounded-3xl font-black text-base flex items-center justify-center gap-4 hover:bg-blue-700 active:scale-95 transition-all shadow-xl shadow-blue-900/30"><CheckCircle2 className="w-6 h-6" /> Finalizar (100%)</button>}
+                <button onClick={() => openQuickInput(selectedOS.id, 'Entrada', 'INCOME')} className="w-full bg-emerald-600 py-5 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-emerald-700 active:scale-95 transition-all shadow-lg shadow-emerald-900/30"><DollarSign className="w-5 h-5" /> Registrar Entrada $</button>
+                {selectedOS.status !== OSStatus.PAID && <button onClick={() => updateOSStatus(selectedOS.id, OSStatus.FINISHED)} className="w-full bg-blue-600 py-5 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-900/30"><CheckCircle2 className="w-5 h-5" /> Finalizar Obra (100%)</button>}
               </div>
             </div>
             <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">

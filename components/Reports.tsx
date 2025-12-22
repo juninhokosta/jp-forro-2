@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
-import { Download, FileText, Calendar, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Download, FileText, Calendar, ArrowUpRight, ArrowDownRight, Printer } from 'lucide-react';
 
 const Reports: React.FC = () => {
   const { transactions, users } = useApp();
@@ -12,6 +12,8 @@ const Reports: React.FC = () => {
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
   ];
+
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
   const filtered = transactions.filter(t => {
       const d = new Date(t.date);
@@ -27,13 +29,19 @@ const Reports: React.FC = () => {
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-  const exportPDF = () => {
-      // O CSS no index.html garante que a barra lateral e botões não apareçam no PDF
-      window.print();
+  // Função de exportação para PDF (via diálogo de impressão do sistema)
+  const handleExportPDF = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Pequeno delay para garantir que qualquer estado de hover ou transição UI seja finalizado
+      setTimeout(() => {
+        window.print();
+      }, 100);
   };
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho do Relatório */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
@@ -44,23 +52,35 @@ const Reports: React.FC = () => {
                 <p className="text-sm text-slate-500">Resumo consolidado da sociedade</p>
             </div>
         </div>
-        <div className="flex gap-2 w-full md:w-auto no-print">
+        
+        <div className="flex flex-wrap gap-2 w-full md:w-auto no-print">
             <select 
                 value={month} 
                 onChange={e => setMonth(parseInt(e.target.value))}
-                className="flex-1 md:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm font-bold"
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500"
             >
                 {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
             </select>
-            <button 
-                onClick={exportPDF}
-                className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-95"
+            
+            <select 
+                value={year} 
+                onChange={e => setYear(parseInt(e.target.value))}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500"
             >
-                <Download className="w-4 h-4" /> Exportar PDF
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+
+            <button 
+                type="button"
+                onClick={handleExportPDF}
+                className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-lg shadow-slate-200 hover:bg-black transition-all active:scale-95 cursor-pointer"
+            >
+                <Printer className="w-4 h-4" /> Exportar PDF
             </button>
         </div>
       </div>
 
+      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md self-start mb-4 uppercase tracking-tighter">Total Entradas</span>
@@ -85,6 +105,7 @@ const Reports: React.FC = () => {
           </div>
       </div>
 
+      {/* Tabela de Detalhamento */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h4 className="font-bold text-slate-800 flex items-center gap-2">
@@ -103,27 +124,34 @@ const Reports: React.FC = () => {
                       </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                      {users.map(u => {
+                      {users.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-10 text-center text-slate-400 italic">Nenhum usuário cadastrado na sociedade.</td>
+                        </tr>
+                      ) : users.map(u => {
                           const uTrans = filtered.filter(t => t.userId === u.id);
                           const uInc = uTrans.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.amount, 0);
                           const uExp = uTrans.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
-                          const splitBalance = ((totals.income - totals.expense) / 2) - (uInc - uExp);
+                          const userBalance = uInc - uExp;
+                          const totalNet = totals.income - totals.expense;
+                          const targetBalance = totalNet / 2;
+                          const splitDifference = targetBalance - userBalance;
                           
                           return (
                               <tr key={u.id}>
                                   <td className="px-6 py-4">
                                       <div className="flex items-center gap-2">
-                                          <img src={u.avatar} className="w-8 h-8 rounded-full" />
+                                          <img src={u.avatar} className="w-8 h-8 rounded-full bg-slate-100" />
                                           <span className="font-semibold text-slate-800">{u.name}</span>
                                       </div>
                                   </td>
                                   <td className="px-6 py-4 text-emerald-600 font-medium">{formatCurrency(uInc)}</td>
                                   <td className="px-6 py-4 text-rose-600 font-medium">{formatCurrency(uExp)}</td>
-                                  <td className="px-6 py-4 font-bold text-slate-900">{formatCurrency(uInc - uExp)}</td>
+                                  <td className="px-6 py-4 font-bold text-slate-900">{formatCurrency(userBalance)}</td>
                                   <td className="px-6 py-4 text-right">
-                                      <span className={`font-bold ${splitBalance < 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                          {splitBalance < 0 ? 'Receber ' : 'Pagar '}
-                                          {formatCurrency(Math.abs(splitBalance))}
+                                      <span className={`font-bold ${splitDifference <= 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                          {splitDifference <= 0 ? 'Pagar ' : 'Receber '}
+                                          {formatCurrency(Math.abs(splitDifference))}
                                       </span>
                                   </td>
                               </tr>

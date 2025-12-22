@@ -4,63 +4,43 @@ import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, Catal
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Nota: Estes dados estão prontos para serem persistidos em um banco como Vercel Postgres ou KV.
-  // Por enquanto, utilizamos o localStorage como o "Banco de Dados Local".
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('jp_authorized_users');
-    return saved ? JSON.parse(saved) : [];
-  });
+// Helper para simular chamadas de banco de dados (Vercel Ready)
+const db = {
+  save: (key: string, data: any) => {
+    localStorage.setItem(`jp_db_${key}`, JSON.stringify(data));
+    // Aqui poderíamos disparar um fetch('/api/save', { method: 'POST', body: JSON.stringify({ key, data }) })
+  },
+  load: (key: string, defaultValue: any) => {
+    const saved = localStorage.getItem(`jp_db_${key}`);
+    return saved ? JSON.parse(saved) : defaultValue;
+  }
+};
 
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [users, setUsers] = useState<User[]>(() => db.load('users', []));
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('jp_user');
+    const saved = localStorage.getItem('jp_user_session');
     return saved ? JSON.parse(saved) : null;
   });
+  const [customers, setCustomers] = useState<Customer[]>(() => db.load('customers', []));
+  const [transactions, setTransactions] = useState<Transaction[]>(() => db.load('transactions', []));
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>(() => db.load('os', []));
+  const [quotes, setQuotes] = useState<Quote[]>(() => db.load('quotes', []));
+  const [catalog, setCatalog] = useState<CatalogItem[]>(() => db.load('catalog', [
+    { id: '1', name: 'Mão de Obra Forro PVC', price: 25, type: 'SERVICE' },
+    { id: '2', name: 'Mão de Obra Drywall', price: 35, type: 'SERVICE' },
+    { id: '3', name: 'Perfil Canaleta', price: 15.50, type: 'PRODUCT' },
+    { id: '4', name: 'Placa de Gesso', price: 45, type: 'PRODUCT' }
+  ]));
 
-  const [customers, setCustomers] = useState<Customer[]>(() => {
-    const saved = localStorage.getItem('jp_customers');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('jp_transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>(() => {
-    const saved = localStorage.getItem('jp_os');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [quotes, setQuotes] = useState<Quote[]>(() => {
-    const saved = localStorage.getItem('jp_quotes');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [catalog, setCatalog] = useState<CatalogItem[]>(() => {
-    const saved = localStorage.getItem('jp_catalog');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', name: 'Mão de Obra Forro PVC', price: 25, type: 'SERVICE' },
-      { id: '2', name: 'Mão de Obra Drywall', price: 35, type: 'SERVICE' },
-      { id: '3', name: 'Perfil Canaleta', price: 15.50, type: 'PRODUCT' },
-      { id: '4', name: 'Placa de Gesso', price: 45, type: 'PRODUCT' }
-    ];
-  });
-
-  // Este hook simula o salvamento no banco de dados. 
-  // Em uma versão com backend real, aqui dispararíamos chamadas assíncronas para a API da Vercel.
-  useEffect(() => {
-    localStorage.setItem('jp_authorized_users', JSON.stringify(users));
-    localStorage.setItem('jp_user', JSON.stringify(currentUser));
-    localStorage.setItem('jp_customers', JSON.stringify(customers));
-    localStorage.setItem('jp_transactions', JSON.stringify(transactions));
-    localStorage.setItem('jp_os', JSON.stringify(serviceOrders));
-    localStorage.setItem('jp_quotes', JSON.stringify(quotes));
-    localStorage.setItem('jp_catalog', JSON.stringify(catalog));
-    
-    // Log para fins de auditoria (simulando salvamento em cloud)
-    console.log("Database jp_forro sincronizado com sucesso.");
-  }, [users, currentUser, customers, transactions, serviceOrders, quotes, catalog]);
+  // Sincronização centralizada (Simulando persistência em Cloud/Vercel)
+  useEffect(() => { db.save('users', users); }, [users]);
+  useEffect(() => { localStorage.setItem('jp_user_session', JSON.stringify(currentUser)); }, [currentUser]);
+  useEffect(() => { db.save('customers', customers); }, [customers]);
+  useEffect(() => { db.save('transactions', transactions); }, [transactions]);
+  useEffect(() => { db.save('os', serviceOrders); }, [serviceOrders]);
+  useEffect(() => { db.save('quotes', quotes); }, [quotes]);
+  useEffect(() => { db.save('catalog', catalog); }, [catalog]);
 
   const login = (emailOrId: string, name?: string) => {
     const email = emailOrId.toLowerCase();
@@ -85,7 +65,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('jp_user');
+    localStorage.removeItem('jp_user_session');
   };
 
   const addCustomer = (c: Omit<Customer, 'id' | 'createdAt'>): string => {
