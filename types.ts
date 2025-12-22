@@ -60,6 +60,7 @@ export interface Quote {
   customerContact: string;
   items: ProductItem[];
   total: number;
+  observations?: string;
   createdAt: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
@@ -102,5 +103,6 @@ export interface AppContextType {
   updateQuoteStatus: (id: string, status: Quote['status']) => void;
   catalog: CatalogItem[];
   addCatalogItem: (item: Omit<CatalogItem, 'id'>) => void;
+  updateCatalogItem: (id: string, item: Partial<CatalogItem>) => void;
   removeCatalogItem: (id: string) => void;
 }
