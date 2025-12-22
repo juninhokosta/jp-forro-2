@@ -8,7 +8,6 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const db = {
   save: (key: string, data: any) => {
     localStorage.setItem(`jp_db_${key}`, JSON.stringify(data));
-    // Aqui poderíamos disparar um fetch('/api/save', { method: 'POST', body: JSON.stringify({ key, data }) })
   },
   load: (key: string, defaultValue: any) => {
     const saved = localStorage.getItem(`jp_db_${key}`);
@@ -33,39 +32,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     { id: '4', name: 'Placa de Gesso', price: 45, type: 'PRODUCT' }
   ]));
 
-  // Sincronização centralizada (Simulando persistência em Cloud/Vercel)
   useEffect(() => { db.save('users', users); }, [users]);
-  useEffect(() => { localStorage.setItem('jp_user_session', JSON.stringify(currentUser)); }, [currentUser]);
+  useEffect(() => { 
+    if (currentUser) {
+      localStorage.setItem('jp_user_session', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('jp_user_session');
+    }
+  }, [currentUser]);
   useEffect(() => { db.save('customers', customers); }, [customers]);
   useEffect(() => { db.save('transactions', transactions); }, [transactions]);
   useEffect(() => { db.save('os', serviceOrders); }, [serviceOrders]);
   useEffect(() => { db.save('quotes', quotes); }, [quotes]);
   useEffect(() => { db.save('catalog', catalog); }, [catalog]);
 
-  const login = (emailOrId: string, name?: string) => {
-    const email = emailOrId.toLowerCase();
-    let user = users.find(u => u.email.toLowerCase() === email || u.id === emailOrId);
+  const login = (emailInput: string, passwordInput: string) => {
+    const email = emailInput.toLowerCase();
+    let user = users.find(u => u.email.toLowerCase() === email);
+    
     if (!user) {
       if (users.length < 2) {
+        // Criação automática do primeiro acesso com senha padrão
         const newUser: User = {
           id: Math.random().toString(36).substr(2, 9),
           email: email,
-          name: name || email.split('@')[0],
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+          name: email.split('@')[0],
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+          password: '123456' // Senha inicial padrão
         };
-        setUsers(prev => [...prev, newUser]);
-        setCurrentUser(newUser);
+        
+        if (passwordInput === '123456') {
+          setUsers(prev => [...prev, newUser]);
+          setCurrentUser(newUser);
+        } else {
+          throw new Error("Senha incorreta para novo cadastro.");
+        }
       } else {
-        throw new Error("Limite de 2 usuários atingido.");
+        throw new Error("Usuário não encontrado ou limite de sociedade atingido.");
       }
     } else {
-      setCurrentUser(user);
+      if (user.password === passwordInput) {
+        setCurrentUser(user);
+      } else {
+        throw new Error("Senha incorreta.");
+      }
     }
   };
 
   const logout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('jp_user_session');
+  };
+
+  const changePassword = (newPassword: string) => {
+    if (!currentUser) return;
+    const updatedUsers = users.map(u => 
+      u.id === currentUser.id ? { ...u, password: newPassword } : u
+    );
+    setUsers(updatedUsers);
+    setCurrentUser({ ...currentUser, password: newPassword });
+    alert("Senha alterada com sucesso!");
   };
 
   const addCustomer = (c: Omit<Customer, 'id' | 'createdAt'>): string => {
@@ -168,7 +193,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{ 
-      currentUser, users, login, logout, customers, addCustomer,
+      currentUser, users, login, logout, changePassword, customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, updateQuoteStatus,

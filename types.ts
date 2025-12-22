@@ -23,6 +23,7 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
+  password?: string;
 }
 
 export interface Customer {
@@ -82,8 +83,9 @@ export interface ServiceOrder {
 export interface AppContextType {
   currentUser: User | null;
   users: User[];
-  login: (userId: string, name?: string) => void;
+  login: (email: string, password: string) => void;
   logout: () => void;
+  changePassword: (newPassword: string) => void;
   customers: Customer[];
   addCustomer: (c: Omit<Customer, 'id' | 'createdAt'>) => string;
   transactions: Transaction[];
