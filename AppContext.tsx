@@ -1,10 +1,12 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem } from './types';
+import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem, Customer } from './types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Nota: Estes dados estão prontos para serem persistidos em um banco como Vercel Postgres ou KV.
+  // Por enquanto, utilizamos o localStorage como o "Banco de Dados Local".
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('jp_authorized_users');
     return saved ? JSON.parse(saved) : [];
@@ -13,6 +15,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('jp_user');
     return saved ? JSON.parse(saved) : null;
+  });
+
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    const saved = localStorage.getItem('jp_customers');
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
@@ -40,19 +47,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ];
   });
 
+  // Este hook simula o salvamento no banco de dados. 
+  // Em uma versão com backend real, aqui dispararíamos chamadas assíncronas para a API da Vercel.
   useEffect(() => {
     localStorage.setItem('jp_authorized_users', JSON.stringify(users));
     localStorage.setItem('jp_user', JSON.stringify(currentUser));
+    localStorage.setItem('jp_customers', JSON.stringify(customers));
     localStorage.setItem('jp_transactions', JSON.stringify(transactions));
     localStorage.setItem('jp_os', JSON.stringify(serviceOrders));
     localStorage.setItem('jp_quotes', JSON.stringify(quotes));
     localStorage.setItem('jp_catalog', JSON.stringify(catalog));
-  }, [users, currentUser, transactions, serviceOrders, quotes, catalog]);
+    
+    // Log para fins de auditoria (simulando salvamento em cloud)
+    console.log("Database jp_forro sincronizado com sucesso.");
+  }, [users, currentUser, customers, transactions, serviceOrders, quotes, catalog]);
 
   const login = (emailOrId: string, name?: string) => {
     const email = emailOrId.toLowerCase();
     let user = users.find(u => u.email.toLowerCase() === email || u.id === emailOrId);
-    
     if (!user) {
       if (users.length < 2) {
         const newUser: User = {
@@ -64,7 +76,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUsers(prev => [...prev, newUser]);
         setCurrentUser(newUser);
       } else {
-        throw new Error("Limite de 2 usuários atingido para esta sociedade.");
+        throw new Error("Limite de 2 usuários atingido.");
       }
     } else {
       setCurrentUser(user);
@@ -74,6 +86,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem('jp_user');
+  };
+
+  const addCustomer = (c: Omit<Customer, 'id' | 'createdAt'>): string => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newCustomer: Customer = { ...c, id, createdAt: new Date().toISOString() };
+    setCustomers(prev => [...prev, newCustomer]);
+    return id;
   };
 
   const addTransaction = (t: Omit<Transaction, 'id' | 'userId' | 'userName'>) => {
@@ -125,12 +144,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const createOSFromQuote = (quote: Quote) => {
+    const customer = customers.find(c => c.id === quote.customerId);
     const newOS: ServiceOrder = {
       id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
       quoteId: quote.id,
+      customerId: quote.customerId,
       customerName: quote.customerName,
       customerContact: quote.customerContact,
-      description: `Serviço originado do Orçamento ${quote.id}. Itens: ` + quote.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+      customerAddress: customer?.address || '',
+      description: `Ref Orçamento ${quote.id}. Itens: ` + quote.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
       status: OSStatus.APPROVED,
       progress: 30,
       createdAt: new Date().toISOString(),
@@ -166,7 +188,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{ 
-      currentUser, users, login, logout, 
+      currentUser, users, login, logout, customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, updateQuoteStatus,
@@ -179,6 +201,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useApp = () => {
   const context = useContext(AppContext);
-  if (!context) throw new Error('useApp must be used within AppProvider');
+  if (!context) throw new Error('useApp error');
   return context;
 };

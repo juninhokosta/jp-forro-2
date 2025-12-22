@@ -12,6 +12,27 @@
         body { font-family: 'Inter', sans-serif; }
         #root:empty { min-height: 100vh; background-color: #f8fafc; }
         .g_id_signin { display: flex; justify-content: center; }
+
+        /* Estilos para Exportação de PDF via Impressão */
+        @media print {
+            aside, header, button, .no-print {
+                display: none !important;
+            }
+            main {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .bg-slate-50 {
+                background-color: white !important;
+            }
+            .rounded-[2.5rem], .rounded-[3rem] {
+                border-radius: 0.5rem !important;
+            }
+            .shadow-sm, .shadow-xl, .shadow-2xl {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+        }
     </style>
 <script type="importmap">
 {

@@ -25,6 +25,14 @@ export interface User {
   avatar: string;
 }
 
+export interface Customer {
+  id: string;
+  name: string;
+  contact: string;
+  address: string;
+  createdAt: string;
+}
+
 export interface Transaction {
   id: string;
   type: TransactionType;
@@ -46,6 +54,7 @@ export interface ProductItem {
 
 export interface Quote {
   id: string;
+  customerId?: string;
   customerName: string;
   customerContact: string;
   items: ProductItem[];
@@ -57,6 +66,7 @@ export interface Quote {
 export interface ServiceOrder {
   id: string;
   quoteId?: string;
+  customerId?: string;
   customerName: string;
   customerContact?: string;
   customerAddress?: string;
@@ -74,6 +84,8 @@ export interface AppContextType {
   users: User[];
   login: (userId: string, name?: string) => void;
   logout: () => void;
+  customers: Customer[];
+  addCustomer: (c: Omit<Customer, 'id' | 'createdAt'>) => string;
   transactions: Transaction[];
   addTransaction: (t: Omit<Transaction, 'id' | 'userId' | 'userName'>) => void;
   updateTransaction: (id: string, t: Partial<Transaction>) => void;
