@@ -6,7 +6,7 @@ import {
   CheckCircle2, Clock, DollarSign, User, 
   Settings, X, ClipboardList, MapPin, Phone, Fuel, ShoppingCart, 
   Utensils, Coffee, ChevronRight, Edit3,
-  ArrowRight, Calculator, Soup, PlusCircle, Edit, Trash2
+  ArrowRight, Calculator, Soup, PlusCircle, Edit, Trash2, Info
 } from 'lucide-react';
 
 const ServiceOrders: React.FC = () => {
@@ -28,12 +28,14 @@ const ServiceOrders: React.FC = () => {
     osId: string;
     type: 'INCOME' | 'EXPENSE';
     value: string;
+    notes: string;
   }>({
     show: false,
     category: '',
     osId: '',
     type: 'EXPENSE',
-    value: ''
+    value: '',
+    notes: ''
   });
 
   const [editOS, setEditOS] = useState({ 
@@ -84,7 +86,7 @@ const ServiceOrders: React.FC = () => {
   };
 
   const openQuickInput = (osId: string, category: string, type: 'INCOME' | 'EXPENSE' = 'EXPENSE') => {
-    setQuickInput({ show: true, category, osId, type, value: '' });
+    setQuickInput({ show: true, category, osId, type, value: '', notes: '' });
   };
 
   const handleQuickInputSubmit = (e: React.FormEvent) => {
@@ -97,9 +99,10 @@ const ServiceOrders: React.FC = () => {
         description: `${quickInput.category} - OS ${quickInput.osId}`,
         category: quickInput.category,
         date: new Date().toISOString().split('T')[0],
-        osId: quickInput.osId
+        osId: quickInput.osId,
+        notes: quickInput.notes
       });
-      setQuickInput({ ...quickInput, show: false });
+      setQuickInput({ ...quickInput, show: false, notes: '' });
     }
   };
 
@@ -195,11 +198,23 @@ const ServiceOrders: React.FC = () => {
                 <button type="button" onClick={() => setQuickInput({ ...quickInput, show: false })} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
               </div>
               <div className="space-y-5">
-                <div className="relative">
-                   <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-lg text-slate-400">R$</span>
-                   <input autoFocus type="number" step="0.01" required value={quickInput.value} onChange={e => setQuickInput({ ...quickInput, value: e.target.value })} className="w-full pl-14 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-black text-2xl text-slate-800 transition-all" placeholder="0,00" />
+                <div className="space-y-1">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor da Despesa</label>
+                   <div className="relative">
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-lg text-slate-400">R$</span>
+                      <input autoFocus type="number" step="0.01" required value={quickInput.value} onChange={e => setQuickInput({ ...quickInput, value: e.target.value })} className="w-full pl-14 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-black text-2xl text-slate-800 transition-all" placeholder="0,00" />
+                   </div>
                 </div>
-                <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">Confirmar <ArrowRight className="w-4 h-4" /></button>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalhes (Opcional)</label>
+                  <textarea 
+                    value={quickInput.notes} 
+                    onChange={e => setQuickInput({ ...quickInput, notes: e.target.value })}
+                    placeholder="Ex: Nota fiscal 123, material extra..."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] text-sm font-medium"
+                  />
+                </div>
+                <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">Confirmar Lançamento <ArrowRight className="w-4 h-4" /></button>
               </div>
             </form>
           </div>

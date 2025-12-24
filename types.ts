@@ -44,6 +44,7 @@ export interface Transaction {
   userName: string;
   date: string;
   osId?: string;
+  notes?: string;
 }
 
 export interface ProductItem {
