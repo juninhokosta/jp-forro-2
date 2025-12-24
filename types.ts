@@ -96,6 +96,7 @@ export interface AppContextType {
   serviceOrders: ServiceOrder[];
   addOS: (os: Omit<ServiceOrder, 'id' | 'progress' | 'createdAt'>) => void;
   updateOS: (id: string, os: Partial<ServiceOrder>) => void;
+  deleteOS: (id: string) => void;
   updateOSStatus: (id: string, status: OSStatus) => void;
   createOSFromQuote: (quote: Quote) => void;
   quotes: Quote[];

@@ -103,6 +103,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setServiceOrders(prev => prev.map(os => os.id === id ? { ...os, ...updates } : os));
   };
 
+  const deleteOS = (id: string) => {
+    setServiceOrders(prev => prev.filter(os => os.id !== id));
+  };
+
   const updateOSStatus = (id: string, status: OSStatus) => {
     setServiceOrders(prev => prev.map(os => {
       if (os.id === id) {
@@ -159,7 +163,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{ 
       currentUser, users, login, logout, changePassword, customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
-      serviceOrders, addOS, updateOS, updateOSStatus, createOSFromQuote,
+      serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, updateQuoteStatus,
       catalog, addCatalogItem, updateCatalogItem, removeCatalogItem
     }}>

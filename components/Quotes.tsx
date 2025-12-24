@@ -1,11 +1,24 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
-import { Plus, Trash2, CheckCircle, XCircle, Search, ShoppingBag, Clock, Play, UserPlus, MapPin, Printer, Send, Edit, MessageCircle, FileText } from 'lucide-react';
+import { Plus, Trash2, XCircle, Search, UserPlus, Printer, Edit, MessageCircle, FileText, LayoutList, X } from 'lucide-react';
 import { ProductItem, Quote, Customer, CatalogItem } from '../types';
 
 const Quotes: React.FC = () => {
-  const { quotes, addQuote, updateQuoteStatus, catalog, createOSFromQuote, customers, addCustomer, updateCatalogItem } = useApp();
+  const { 
+    quotes, 
+    addQuote, 
+    updateQuoteStatus, 
+    catalog, 
+    createOSFromQuote, 
+    customers, 
+    addCustomer, 
+    updateCatalogItem,
+    addCatalogItem,
+    removeCatalogItem
+  } = useApp();
+
+  const [view, setView] = useState<'LIST' | 'CATALOG'>('LIST');
   const [showAddQuote, setShowAddQuote] = useState(false);
   const [selectedQuoteForExport, setSelectedQuoteForExport] = useState<Quote | null>(null);
   
@@ -24,6 +37,9 @@ const Quotes: React.FC = () => {
   const [editingCatalogId, setEditingCatalogId] = useState<string | null>(null);
   const [catalogEditName, setCatalogEditName] = useState('');
   const [catalogEditPrice, setCatalogEditPrice] = useState('');
+
+  // Estado para novo item no catálogo master (dentro da view CATALOG)
+  const [newItem, setNewItem] = useState({ name: '', price: '', type: 'SERVICE' as 'SERVICE' | 'PRODUCT' });
 
   const filteredCatalog = catalog.filter(i => 
     i.name.toLowerCase().includes(searchItem.toLowerCase())
@@ -61,6 +77,17 @@ const Quotes: React.FC = () => {
       price: parseFloat(catalogEditPrice) || 0
     });
     setEditingCatalogId(null);
+  };
+
+  const handleAddMasterItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.name || !newItem.price) return;
+    addCatalogItem({
+      name: newItem.name,
+      price: parseFloat(newItem.price),
+      type: newItem.type as any
+    });
+    setNewItem({ name: '', price: '', type: 'SERVICE' });
   };
 
   const handleRemoveItem = (id: string) => setItems(items.filter(i => i.id !== id));
@@ -121,9 +148,57 @@ const Quotes: React.FC = () => {
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
+  if (view === 'CATALOG') {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300 pb-24 md:pb-10">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setView('LIST')} className="text-slate-500 flex items-center gap-2 hover:text-slate-800 font-bold uppercase text-[10px] tracking-widest">
+            <X className="w-5 h-5" /> Voltar aos Orçamentos
+          </button>
+          <h3 className="text-lg font-black text-slate-800">Catálogo Master</h3>
+        </div>
+        <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-200">
+          <h4 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-[10px]">Cadastrar Novo Item</h4>
+          <form onSubmit={handleAddMasterItem} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descrição do Produto/Serviço</label>
+              <input type="text" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500" placeholder="Ex: Mão de Obra Forro PVC" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço Base (R$)</label>
+              <input type="number" step="0.01" value={newItem.price} onChange={e => setNewItem({...newItem, price: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500" placeholder="0,00" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</label>
+              <select value={newItem.type} onChange={e => setNewItem({...newItem, type: e.target.value as any})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500">
+                <option value="SERVICE">Serviço</option>
+                <option value="PRODUCT">Produto</option>
+              </select>
+            </div>
+            <button type="submit" className="bg-blue-600 text-white font-black py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">Adicionar ao Catálogo</button>
+          </form>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {catalog.map(item => (
+            <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex justify-between items-center group shadow-sm">
+              <div>
+                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${item.type === 'SERVICE' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>{item.type}</span>
+                <p className="font-black text-slate-800 mt-1 text-sm">{item.name}</p>
+                <p className="text-xs text-blue-600 font-black">{formatCurrency(item.price)}</p>
+              </div>
+              <button onClick={() => removeCatalogItem(item.id)} className="text-slate-300 hover:text-rose-500 transition-colors" title="Excluir do Catálogo Master">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Visualização de Impressão (Oculta na UI normal) */}
+    <div className="space-y-6 animate-in fade-in duration-300 pb-20 md:pb-10">
+      {/* Visualização de Impressão */}
       {selectedQuoteForExport && (
         <div className="fixed inset-0 bg-white z-[999] p-10 overflow-auto print:block hidden">
           <div className="border-b-4 border-blue-600 pb-6 mb-8 flex justify-between items-end">
@@ -186,17 +261,25 @@ const Quotes: React.FC = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center no-print">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
         <div>
           <h3 className="text-2xl font-black text-slate-800 tracking-tight">Orçamentos</h3>
           <p className="text-sm text-slate-500 font-medium">Propostas comerciais e histórico</p>
         </div>
-        <button 
-          onClick={() => setShowAddQuote(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
-        >
-          <Plus className="w-5 h-5" /> Novo Orçamento
-        </button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button 
+            onClick={() => setView('CATALOG')}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all"
+          >
+            <LayoutList className="w-4 h-4" /> Itens do Catálogo
+          </button>
+          <button 
+            onClick={() => setShowAddQuote(true)}
+            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+          >
+            <Plus className="w-5 h-5" /> Novo Orçamento
+          </button>
+        </div>
       </div>
 
       {showAddQuote && (
@@ -213,7 +296,6 @@ const Quotes: React.FC = () => {
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
-              {/* Coluna 1: Banco de Dados de Clientes */}
               <div className="space-y-6 lg:border-r pr-0 lg:pr-6">
                  <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">BUSCAR CLIENTE SALVO</h5>
                  <div className="space-y-2 max-h-[150px] lg:max-h-[400px] overflow-y-auto pr-2">
@@ -231,14 +313,13 @@ const Quotes: React.FC = () => {
                  </div>
               </div>
 
-              {/* Coluna 2: Dados Atuais */}
               <div className="space-y-8">
                 <div className="space-y-4">
                   <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2"><UserPlus className="w-4 h-4" /> DADOS DO CLIENTE</h5>
                   <div className="space-y-4">
                     <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-sm" placeholder="Nome Completo" />
                     <input type="text" value={customerContact} onChange={e => setCustomerContact(e.target.value)} className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-sm" placeholder="WhatsApp" />
-                    <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-sm" placeholder="Endereço" />
+                    <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-sm" placeholder="Endereço de Obra" />
                     <textarea value={observations} onChange={e => setObservations(e.target.value)} className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-sm min-h-[60px]" placeholder="Observações do orçamento..."></textarea>
                   </div>
                 </div>
@@ -269,7 +350,6 @@ const Quotes: React.FC = () => {
                 </div>
               </div>
 
-              {/* Coluna 3: Catálogo */}
               <div className="bg-slate-50 p-6 md:p-8 rounded-[2.5rem] space-y-6 border border-slate-100">
                 <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ITENS DO CATÁLOGO</h5>
                 <div className="relative">
@@ -363,7 +443,7 @@ const Quotes: React.FC = () => {
                     onClick={() => { createOSFromQuote(q); }}
                     className="w-full py-4 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-500/20"
                   >
-                    <Play className="w-4 h-4" /> Iniciar Obra
+                    <FileText className="w-4 h-4" /> Gerar OS da Obra
                   </button>
                 ) : (
                   <div className="text-center py-2 bg-slate-50 rounded-xl">
