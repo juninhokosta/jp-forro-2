@@ -145,6 +145,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setQuotes(prev => [{ ...q, id: `ORC-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'PENDING' }, ...prev]);
   };
 
+  const deleteQuote = (id: string) => {
+    setQuotes(prev => prev.filter(q => q.id !== id));
+  };
+
   const updateQuoteStatus = (id: string, status: Quote['status']) => {
     setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
   };
@@ -164,7 +168,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentUser, users, login, logout, changePassword, customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
-      quotes, addQuote, updateQuoteStatus,
+      quotes, addQuote, deleteQuote, updateQuoteStatus,
       catalog, addCatalogItem, updateCatalogItem, removeCatalogItem
     }}>
       {children}

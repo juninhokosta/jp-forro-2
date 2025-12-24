@@ -8,6 +8,7 @@ const Quotes: React.FC = () => {
   const { 
     quotes, 
     addQuote, 
+    deleteQuote,
     updateQuoteStatus, 
     catalog, 
     createOSFromQuote, 
@@ -91,6 +92,12 @@ const Quotes: React.FC = () => {
   };
 
   const handleRemoveItem = (id: string) => setItems(items.filter(i => i.id !== id));
+
+  const handleDeleteQuote = (id: string) => {
+    if (confirm('Tem certeza que deseja excluir este orçamento? Esta ação não pode ser desfeita.')) {
+      deleteQuote(id);
+    }
+  };
 
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -404,18 +411,27 @@ const Quotes: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 no-print pb-20">
         {quotes.map(q => (
-          <div key={q.id} className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-6 hover:shadow-xl transition-all">
+          <div key={q.id} className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-6 hover:shadow-xl transition-all relative">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-lg">{q.id}</span>
                 <h4 className="font-black text-slate-900 mt-2 text-lg truncate max-w-[150px]">{q.customerName}</h4>
               </div>
-              <span className={`px-3 py-1 rounded-xl text-[8px] font-black uppercase border ${
-                  q.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                  q.status === 'REJECTED' ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-600'
-              }`}>
-                  {q.status}
-              </span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handleDeleteQuote(q.id)}
+                  className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                  title="Excluir Orçamento"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <span className={`px-3 py-1 rounded-xl text-[8px] font-black uppercase border ${
+                    q.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                    q.status === 'REJECTED' ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-600'
+                }`}>
+                    {q.status}
+                </span>
+              </div>
             </div>
 
             <div className="p-4 bg-slate-50/50 rounded-2xl text-xs font-black text-blue-600 flex justify-between border border-slate-100">

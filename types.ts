@@ -101,6 +101,7 @@ export interface AppContextType {
   createOSFromQuote: (quote: Quote) => void;
   quotes: Quote[];
   addQuote: (q: Omit<Quote, 'id' | 'createdAt' | 'status'>) => void;
+  deleteQuote: (id: string) => void;
   updateQuoteStatus: (id: string, status: Quote['status']) => void;
   catalog: CatalogItem[];
   addCatalogItem: (item: Omit<CatalogItem, 'id'>) => void;
