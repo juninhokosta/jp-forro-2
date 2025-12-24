@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Receipt, Briefcase, FileText, PieChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Receipt, Briefcase, FileText, PieChart, LogOut, Settings } from 'lucide-react';
 import { useApp } from '../AppContext';
 
 interface SidebarProps {
@@ -17,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'expenses', label: 'Despesas', icon: Receipt },
     { id: 'quotes', label: 'Orçamentos', icon: FileText },
     { id: 'reports', label: 'Relatórios', icon: PieChart },
+    { id: 'settings', label: 'Configurações', icon: Settings },
   ];
 
   return (

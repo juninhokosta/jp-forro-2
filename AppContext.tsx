@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem, Customer } from './types';
+import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem, Customer, CompanySettings } from './types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -30,6 +30,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     { id: '3', name: 'Perfil Canaleta', price: 15.50, type: 'PRODUCT' },
     { id: '4', name: 'Placa de Gesso', price: 45, type: 'PRODUCT' }
   ]));
+  const [companySettings, setCompanySettings] = useState<CompanySettings>(() => db.load('company_settings', {
+    name: 'JP FORRO',
+    slogan: 'Excelência em Forros e Revestimentos',
+    phone: '(00) 00000-0000',
+    address: 'Endereço da sua empresa aqui'
+  }));
 
   useEffect(() => { db.save('users', users); }, [users]);
   useEffect(() => { 
@@ -44,6 +50,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { db.save('os', serviceOrders); }, [serviceOrders]);
   useEffect(() => { db.save('quotes', quotes); }, [quotes]);
   useEffect(() => { db.save('catalog', catalog); }, [catalog]);
+  useEffect(() => { db.save('company_settings', companySettings); }, [companySettings]);
 
   const login = (emailInput: string, passwordInput: string) => {
     const email = emailInput.toLowerCase();
@@ -163,13 +170,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const removeCatalogItem = (id: string) => setCatalog(prev => prev.filter(i => i.id !== id));
 
+  const updateCompanySettings = (settings: CompanySettings) => {
+    setCompanySettings(settings);
+    alert("Dados da empresa atualizados!");
+  };
+
   return (
     <AppContext.Provider value={{ 
       currentUser, users, login, logout, changePassword, customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, deleteQuote, updateQuoteStatus,
-      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem
+      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem,
+      companySettings, updateCompanySettings
     }}>
       {children}
     </AppContext.Provider>

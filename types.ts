@@ -82,6 +82,14 @@ export interface ServiceOrder {
   totalValue: number;
 }
 
+export interface CompanySettings {
+  name: string;
+  slogan: string;
+  phone: string;
+  address: string;
+  logo?: string; // Base64 image
+}
+
 export interface AppContextType {
   currentUser: User | null;
   users: User[];
@@ -108,4 +116,6 @@ export interface AppContextType {
   addCatalogItem: (item: Omit<CatalogItem, 'id'>) => void;
   updateCatalogItem: (id: string, item: Partial<CatalogItem>) => void;
   removeCatalogItem: (id: string) => void;
+  companySettings: CompanySettings;
+  updateCompanySettings: (settings: CompanySettings) => void;
 }

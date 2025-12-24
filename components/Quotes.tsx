@@ -16,7 +16,8 @@ const Quotes: React.FC = () => {
     addCustomer, 
     updateCatalogItem,
     addCatalogItem,
-    removeCatalogItem
+    removeCatalogItem,
+    companySettings
   } = useApp();
 
   const [view, setView] = useState<'LIST' | 'CATALOG'>('LIST');
@@ -144,7 +145,7 @@ const Quotes: React.FC = () => {
   };
 
   const handleWhatsApp = (q: Quote) => {
-    const message = `*ORÇAMENTO - JP FORRO*\n\n` +
+    const message = `*ORÇAMENTO - ${companySettings.name}*\n\n` +
       `Olá ${q.customerName}, segue sua proposta:\n\n` +
       q.items.map(i => `- ${i.quantity}x ${i.name}: ${formatCurrency(i.price * i.quantity)}`).join('\n') +
       `\n\n*TOTAL: ${formatCurrency(q.total)}*\n` +
@@ -209,9 +210,18 @@ const Quotes: React.FC = () => {
       {selectedQuoteForExport && (
         <div className="fixed inset-0 bg-white z-[999] p-10 overflow-auto print:block hidden">
           <div className="border-b-4 border-blue-600 pb-6 mb-8 flex justify-between items-end">
-            <div>
-              <h1 className="text-4xl font-black text-slate-900">JP FORRO</h1>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Excelência em Forros e Revestimentos</p>
+            <div className="flex items-center gap-6">
+              {companySettings.logo && (
+                <img src={companySettings.logo} alt="Logo" className="w-24 h-24 object-contain" />
+              )}
+              <div>
+                <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">{companySettings.name}</h1>
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{companySettings.slogan}</p>
+                <div className="mt-2 space-y-0.5">
+                   <p className="text-[10px] font-bold text-slate-400 uppercase">{companySettings.address}</p>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase">Contato: {companySettings.phone}</p>
+                </div>
+              </div>
             </div>
             <div className="text-right">
               <p className="text-sm font-black text-blue-600">ORÇAMENTO: {selectedQuoteForExport.id}</p>

@@ -9,7 +9,8 @@ import ServiceOrders from './components/ServiceOrders';
 import Quotes from './components/Quotes';
 import Reports from './components/Reports';
 import Login from './components/Login';
-import { LayoutDashboard, Briefcase, Receipt, FileText, PieChart } from 'lucide-react';
+import Settings from './components/Settings';
+import { LayoutDashboard, Briefcase, Receipt, FileText, PieChart, Settings as SettingsIcon } from 'lucide-react';
 
 const BottomNav: React.FC<{ activeTab: string; setActiveTab: (tab: string) => void }> = ({ activeTab, setActiveTab }) => {
   const menuItems = [
@@ -17,7 +18,7 @@ const BottomNav: React.FC<{ activeTab: string; setActiveTab: (tab: string) => vo
     { id: 'os', label: 'OS', icon: Briefcase },
     { id: 'expenses', label: 'Gasto', icon: Receipt },
     { id: 'quotes', label: 'Orc.', icon: FileText },
-    { id: 'reports', label: 'Relat.', icon: PieChart },
+    { id: 'settings', label: 'Conf.', icon: SettingsIcon },
   ];
 
   return (
@@ -51,6 +52,7 @@ const MainLayout: React.FC = () => {
       case 'os': return <ServiceOrders />;
       case 'quotes': return <Quotes />;
       case 'reports': return <Reports />;
+      case 'settings': return <Settings />;
       default: return <Dashboard />;
     }
   };
