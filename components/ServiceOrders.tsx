@@ -71,6 +71,13 @@ const ServiceOrders: React.FC = () => {
     }
   };
 
+  const handleFinishOS = (id: string) => {
+    updateOSStatus(id, OSStatus.FINISHED);
+    alert("Obra Finalizada!");
+    setView('LIST');
+    setSelectedOSId(null);
+  };
+
   const handleStartEdit = (os: ServiceOrder) => {
     setEditOS({
       customerName: os.customerName,
@@ -292,7 +299,7 @@ const ServiceOrders: React.FC = () => {
 
               <div className="space-y-3">
                 <button onClick={() => openQuickInput(selectedOS.id, 'Entrada', 'INCOME')} className="w-full bg-emerald-600 py-4 rounded-xl md:rounded-2xl font-black text-xs flex items-center justify-center gap-3 hover:bg-emerald-700 active:scale-95 transition-all shadow-lg"><DollarSign className="w-4 h-4" /> Entrada $</button>
-                {selectedOS.status !== OSStatus.PAID && <button onClick={() => updateOSStatus(selectedOS.id, OSStatus.FINISHED)} className="w-full bg-blue-600 py-4 rounded-xl md:rounded-2xl font-black text-xs flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-95 transition-all shadow-lg"><CheckCircle2 className="w-4 h-4" /> Finalizar Obra</button>}
+                {selectedOS.status !== OSStatus.PAID && <button onClick={() => handleFinishOS(selectedOS.id)} className="w-full bg-blue-600 py-4 rounded-xl md:rounded-2xl font-black text-xs flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-95 transition-all shadow-lg"><CheckCircle2 className="w-4 h-4" /> Finalizar Obra</button>}
               </div>
             </div>
             <div className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100">
