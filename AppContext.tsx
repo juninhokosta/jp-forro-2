@@ -15,11 +15,34 @@ const db = {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<User[]>(() => db.load('users', []));
+  const [users, setUsers] = useState<User[]>(() => {
+    const loaded = db.load('users', []);
+    if (loaded.length === 0) {
+      return [
+        {
+          id: 'socio-1',
+          name: 'Ivo junior',
+          email: 'ivo@jpforro.com',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivo',
+          password: '123456'
+        },
+        {
+          id: 'socio-2',
+          name: 'Pedro Augusto',
+          email: 'pedro@jpforro.com',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro',
+          password: '123456'
+        }
+      ];
+    }
+    return loaded;
+  });
+
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('jp_user_session');
     return saved ? JSON.parse(saved) : null;
   });
+  
   const [customers, setCustomers] = useState<Customer[]>(() => db.load('customers', []));
   const [transactions, setTransactions] = useState<Transaction[]>(() => db.load('transactions', []));
   const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>(() => db.load('os', []));
@@ -49,19 +72,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const email = emailInput.toLowerCase();
     let user = users.find(u => u.email.toLowerCase() === email);
     if (!user) {
-      if (users.length < 2) {
-        const newUser: User = {
-          id: Math.random().toString(36).substr(2, 9),
-          email: email,
-          name: email.split('@')[0],
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-          password: '123456'
-        };
-        if (passwordInput === '123456') {
-          setUsers(prev => [...prev, newUser]);
-          setCurrentUser(newUser);
-        } else throw new Error("Senha incorreta.");
-      } else throw new Error("Limite de usuários atingido.");
+       throw new Error("Usuário não cadastrado.");
     } else {
       if (user.password === passwordInput) setCurrentUser(user);
       else throw new Error("Senha incorreta.");

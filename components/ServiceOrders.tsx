@@ -6,7 +6,8 @@ import {
   CheckCircle2, Clock, DollarSign, User, 
   Settings, X, ClipboardList, MapPin, Phone, Fuel, ShoppingCart, 
   Utensils, Coffee, ChevronRight, Edit3,
-  ArrowRight, Calculator, Soup, PlusCircle, Edit, Trash2, Info
+  ArrowRight, Calculator, Soup, PlusCircle, Edit, Trash2, Info,
+  TrendingUp, Users, Scale
 } from 'lucide-react';
 
 const ServiceOrders: React.FC = () => {
@@ -16,7 +17,8 @@ const ServiceOrders: React.FC = () => {
     deleteOS,
     updateOSStatus, 
     addTransaction, 
-    transactions
+    transactions,
+    users
   } = useApp();
 
   const [view, setView] = useState<'LIST' | 'DETAIL' | 'EDIT'>('LIST');
@@ -74,13 +76,13 @@ const ServiceOrders: React.FC = () => {
   const handleFinishOS = (id: string) => {
     updateOSStatus(id, OSStatus.FINISHED);
     alert("Obra Finalizada!");
-    setView('LIST');
-    setSelectedOSId(null);
+    setView('DETAIL'); // Mantém no detalhe para ver o fechamento
   };
 
   const handleStartEdit = (os: ServiceOrder) => {
     setEditOS({
       customerName: os.customerName,
+      // Fix: Use customerContact instead of contact to match ServiceOrder type definition
       customerContact: os.customerContact || '',
       customerAddress: os.customerAddress || '',
       description: os.description,
@@ -191,12 +193,14 @@ const ServiceOrders: React.FC = () => {
     const totalIncome = osTransactions.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.amount, 0);
     const totalExpense = osTransactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
     const remainingBalance = selectedOS.totalValue - totalIncome;
+    const profit = totalIncome - totalExpense;
+    const isFinished = selectedOS.status === OSStatus.FINISHED || selectedOS.status === OSStatus.PAID;
 
     return (
       <div className="space-y-6 animate-in fade-in duration-300 pb-32 md:pb-10">
         {quickInput.show && (
           <div className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
-            <form onSubmit={handleQuickInputSubmit} className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl border border-slate-100 animate-in zoom-in-95">
+            <form onSubmit={handleQuickInputSubmit} className="bg-white rounded-[2.5rem] p-8 w-full max-md shadow-2xl border border-slate-100 animate-in zoom-in-95">
               <div className="flex justify-between items-center mb-8">
                 <div>
                   <h4 className="text-xl font-black text-slate-900 tracking-tight">{quickInput.category}</h4>
@@ -289,10 +293,81 @@ const ServiceOrders: React.FC = () => {
                   <h4 className="text-[9px] font-black text-slate-400 uppercase mb-4 tracking-[0.2em] flex items-center gap-2"><ClipboardList className="w-4 h-4" /> DESCRIÇÃO DOS SERVIÇOS</h4>
                   <p className="text-slate-700 font-bold text-sm md:text-lg leading-relaxed italic">"{selectedOS.description}"</p>
               </div>
+
+              {/* NOVA SEÇÃO: DETALHES DE FECHAMENTO E LUCRO PARA SÓCIOS */}
+              {isFinished && (
+                <div className="mt-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <div className="bg-blue-600 p-8 md:p-12 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                    {/* Elementos decorativos de fundo */}
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                      <TrendingUp className="w-48 h-48" />
+                    </div>
+                    
+                    <div className="relative z-10 space-y-8">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-2xl">
+                          <CheckCircle2 className="w-8 h-8" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-black tracking-tight">Fechamento de Obra</h3>
+                          <p className="text-blue-100 text-[10px] uppercase font-black tracking-widest">Resumo Consolidado para Sócios</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white/10 p-6 rounded-[2rem] border border-white/10">
+                          <p className="text-[9px] font-black text-blue-200 uppercase tracking-widest mb-2">LUCRO LÍQUIDO TOTAL</p>
+                          <p className="text-4xl font-black tracking-tighter">{formatCurrency(profit)}</p>
+                        </div>
+                        <div className="bg-white/10 p-6 rounded-[2rem] border border-white/10 flex items-center gap-5">
+                          <div className="p-4 bg-blue-500/30 rounded-2xl">
+                             <Scale className="w-8 h-8" />
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-black text-blue-200 uppercase tracking-widest mb-1">DIVISÃO POR SÓCIO</p>
+                            <p className="text-3xl font-black tracking-tighter">{formatCurrency(profit / 2)}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 border-t border-white/10">
+                        <h4 className="text-[10px] font-black text-blue-200 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                          <Users className="w-4 h-4" /> DISPONÍVEL PARA RETIRADA
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          {users.map((u, i) => (
+                            <div key={u.id} className="flex flex-col items-center bg-white p-4 rounded-3xl text-slate-900 shadow-xl">
+                               <img src={u.avatar} className="w-12 h-12 rounded-full border-2 border-blue-100 mb-3" alt={u.name} />
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{u.name}</span>
+                               <span className="text-lg font-black text-blue-600 mt-1">{formatCurrency(profit / 2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 flex flex-col md:flex-row gap-4 no-print">
+                      <button 
+                        onClick={() => window.print()}
+                        className="flex-1 bg-white border-2 border-slate-200 p-4 rounded-2xl font-black text-slate-600 text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 transition-all"
+                      >
+                         Gerar Relatório Final (PDF)
+                      </button>
+                      <button 
+                        onClick={() => updateOSStatus(selectedOS.id, OSStatus.PAID)}
+                        disabled={selectedOS.status === OSStatus.PAID}
+                        className="flex-1 bg-emerald-600 p-4 rounded-2xl font-black text-white text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-emerald-700 active:scale-95 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                      >
+                         {selectedOS.status === OSStatus.PAID ? "Obra Quitada ✅" : "Marcar como Pago 💰"}
+                      </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="space-y-6 md:space-y-8">
+          <div className="space-y-6 md:space-y-8 no-print">
             <div className="bg-slate-900 text-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-8 flex items-center gap-2"><Settings className="w-4 h-4" /> LANÇAMENTOS RÁPIDOS</h4>
               
@@ -320,7 +395,7 @@ const ServiceOrders: React.FC = () => {
                 <button onClick={() => openQuickInput(selectedOS.id, 'Entrada Financeira', 'INCOME')} className="w-full bg-emerald-600 py-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-xl shadow-emerald-900/40">
                     <DollarSign className="w-4 h-4" /> Receber Pagamento
                 </button>
-                {selectedOS.status !== OSStatus.PAID && (
+                {selectedOS.status !== OSStatus.PAID && selectedOS.status !== OSStatus.FINISHED && (
                     <button onClick={() => handleFinishOS(selectedOS.id)} className="w-full bg-blue-600 py-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-xl shadow-blue-900/40">
                         <CheckCircle2 className="w-4 h-4" /> Finalizar Entrega
                     </button>
