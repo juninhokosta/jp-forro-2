@@ -46,7 +46,7 @@ const Reports: React.FC = () => {
   const osProfit = osIncome - osExpense;
 
   return (
-    <div className="space-y-6 pb-24 md:pb-10">
+    <div className="space-y-4 md:space-y-6 pb-24 md:pb-10">
       {/* Seletor de Tipo de Relatório - Oculto na Impressão */}
       <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm no-print">
         <button 
@@ -149,12 +149,12 @@ const Reports: React.FC = () => {
       ) : (
         <>
           {/* Cabeçalho Relatório OS - Oculto na Impressão */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 no-print">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+          <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 no-print">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="p-3 bg-amber-50 text-amber-600 rounded-xl hidden md:block">
                 <Briefcase className="w-6 h-6" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 w-full">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Selecionar Obra para Fechamento</label>
                 <select 
                   value={selectedOSId} 
@@ -170,7 +170,7 @@ const Reports: React.FC = () => {
               <button 
                 onClick={handleExportPDF} 
                 disabled={!selectedOSId} 
-                className="px-6 py-3 bg-slate-900 text-white rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-all shadow-xl"
+                className="w-full sm:w-auto px-6 py-3 bg-slate-900 text-white rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-all shadow-xl"
               >
                 Imprimir Fechamento
               </button>
@@ -185,200 +185,173 @@ const Reports: React.FC = () => {
           )}
 
           {selectedOS && (
-            <div className="animate-in fade-in duration-500 space-y-8">
-              {/* Cabeçalho de Impressão (Visível apenas no PDF) */}
-              <div className="hidden print:block border-b-4 border-slate-900 pb-6 mb-8">
+            <div className="animate-in fade-in duration-500 space-y-4 md:space-y-6">
+              {/* Cabeçalho de Impressão Compacto */}
+              <div className="hidden print:block border-b-2 border-slate-900 pb-2 mb-4">
                 <div className="flex justify-between items-end">
                   <div>
-                    <h1 className="text-4xl font-black text-slate-900 uppercase">JP FORRO</h1>
-                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Relatório de Fechamento de Obra</p>
+                    <h1 className="text-2xl font-black text-slate-900 uppercase leading-none">JP FORRO</h1>
+                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">FECHAMENTO DE OBRA</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-black text-blue-600">{selectedOS.id}</p>
-                    <p className="text-xs font-bold text-slate-400">Gerado em: {new Date().toLocaleDateString()}</p>
+                    <p className="text-sm font-black text-blue-600">{selectedOS.id}</p>
+                    <p className="text-[8px] font-bold text-slate-400">{new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Informações Gerais da Obra */}
-              <div className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                  <div>
-                    <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-tight">{selectedOS.customerName}</h3>
-                    <div className="space-y-2 mt-4">
-                      <p className="text-slate-500 font-black flex items-center gap-3 text-xs uppercase tracking-tight"><MapPin className="w-4 h-4 text-blue-500 shrink-0" /> {selectedOS.customerAddress}</p>
-                      <p className="text-slate-500 font-black flex items-center gap-3 text-xs uppercase tracking-tight"><Briefcase className="w-4 h-4 text-blue-500 shrink-0" /> Status: {selectedOS.status}</p>
-                    </div>
+              {/* Informações Gerais da Obra - Compacto */}
+              <div className="bg-white p-4 md:p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                <div className="flex flex-col md:flex-row justify-between gap-4 md:gap-8 items-start">
+                  <div className="flex-1">
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter leading-tight">{selectedOS.customerName}</h3>
+                    <p className="text-slate-500 font-black flex items-center gap-2 text-[10px] uppercase mt-2">
+                        <MapPin className="w-3 h-3 text-blue-500" /> {selectedOS.customerAddress}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 bg-slate-900 text-white rounded-3xl">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">VALOR CONTRATO</p>
-                        <p className="text-xl font-black tracking-tighter">{formatCurrency(selectedOS.totalValue)}</p>
+                  <div className="grid grid-cols-2 gap-2 w-full md:w-auto">
+                    <div className="p-3 bg-slate-900 text-white rounded-xl text-center">
+                        <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1">CONTRATO</p>
+                        <p className="text-sm font-black">{formatCurrency(selectedOS.totalValue)}</p>
                     </div>
-                    <div className="p-6 bg-blue-600 text-white rounded-3xl">
-                        <p className="text-[8px] font-black text-blue-200 uppercase tracking-widest mb-1">LUCRO DA OBRA</p>
-                        <p className="text-xl font-black tracking-tighter">{formatCurrency(osProfit)}</p>
+                    <div className="p-3 bg-blue-600 text-white rounded-xl text-center">
+                        <p className="text-[7px] font-black text-blue-200 uppercase tracking-widest mb-1">LUCRO REAL</p>
+                        <p className="text-sm font-black">{formatCurrency(osProfit)}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-100">
-                  <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">TOTAL RECEBIDO</p>
-                    <p className="text-lg font-black text-emerald-600">{formatCurrency(osIncome)}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 pt-4 border-t border-slate-100">
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <p className="text-[7px] font-black text-slate-400 uppercase">RECEBIDO</p>
+                    <p className="text-xs font-black text-emerald-600">{formatCurrency(osIncome)}</p>
                   </div>
-                  <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">TOTAL DE CUSTOS</p>
-                    <p className="text-lg font-black text-rose-600">{formatCurrency(osExpense)}</p>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <p className="text-[7px] font-black text-slate-400 uppercase">CUSTOS</p>
+                    <p className="text-xs font-black text-rose-600">{formatCurrency(osExpense)}</p>
                   </div>
-                  <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">PENDÊNCIA CLIENTE</p>
-                    <p className="text-lg font-black text-amber-500">{formatCurrency(selectedOS.totalValue - osIncome)}</p>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <p className="text-[7px] font-black text-slate-400 uppercase">PENDÊNCIA</p>
+                    <p className="text-xs font-black text-amber-500">{formatCurrency(selectedOS.totalValue - osIncome)}</p>
                   </div>
-                  <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">MARGEM LUCRO</p>
-                    <p className="text-lg font-black text-blue-600">{((osProfit / (osIncome || 1)) * 100).toFixed(1)}%</p>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <p className="text-[7px] font-black text-slate-400 uppercase">MARGEM</p>
+                    <p className="text-xs font-black text-blue-600">{((osProfit / (osIncome || 1)) * 100).toFixed(1)}%</p>
                   </div>
                 </div>
               </div>
 
-              {/* Extrato Detalhado de Despesas - Fundamental para o relatório */}
-              <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                  <Receipt className="w-5 h-5 text-rose-500" />
-                  <h4 className="font-black text-slate-800 text-xs uppercase tracking-[0.2em]">Detalhamento de Custos e Despesas</h4>
+              {/* Extrato Detalhado de Despesas - Compacto */}
+              <div className="bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                <div className="p-3 md:p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-rose-500" />
+                  <h4 className="font-black text-slate-800 text-[9px] uppercase tracking-widest">Extrato de Custos e Despesas</h4>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b">
+                    <thead className="bg-slate-50 text-[8px] font-black text-slate-400 uppercase tracking-widest border-b">
                       <tr>
-                        <th className="px-6 py-4">Data</th>
-                        <th className="px-6 py-4">Sócio Responsável</th>
-                        <th className="px-6 py-4">Descrição do Gasto</th>
-                        <th className="px-6 py-4 text-right">Valor Pago</th>
+                        <th className="px-4 py-2">Data</th>
+                        <th className="px-4 py-2">Sócio</th>
+                        <th className="px-4 py-2">Descrição</th>
+                        <th className="px-4 py-2 text-right">Valor</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {osTransactions.filter(t => t.type === 'EXPENSE').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(t => (
-                        <tr key={t.id} className="text-sm">
-                          <td className="px-6 py-4 text-slate-500 font-bold">{new Date(t.date).toLocaleDateString()}</td>
-                          <td className="px-6 py-4 font-black text-blue-600 uppercase text-[10px] tracking-tighter">{t.userName}</td>
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-slate-800">{t.description}</p>
-                            <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{t.category}</span>
+                        <tr key={t.id} className="text-[10px]">
+                          <td className="px-4 py-1.5 text-slate-400 font-bold">{new Date(t.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-1.5 font-black text-blue-600 uppercase text-[9px] tracking-tighter">{t.userName}</td>
+                          <td className="px-4 py-1.5">
+                            <span className="font-bold text-slate-800">{t.description}</span>
                           </td>
-                          <td className="px-6 py-4 text-right font-black text-rose-600">{formatCurrency(t.amount)}</td>
+                          <td className="px-4 py-1.5 text-right font-black text-rose-600">{formatCurrency(t.amount)}</td>
                         </tr>
                       ))}
-                      {osTransactions.filter(t => t.type === 'EXPENSE').length === 0 && (
-                        <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-300 italic">Nenhum custo registrado nesta obra.</td></tr>
-                      )}
                     </tbody>
-                    <tfoot className="bg-slate-50 font-black text-slate-900 border-t-2 border-slate-200">
+                    <tfoot className="bg-slate-50 font-black text-slate-900 border-t border-slate-200">
                       <tr>
-                        <td colSpan={3} className="px-6 py-4 text-right text-[10px] uppercase tracking-widest">Soma Total de Despesas</td>
-                        <td className="px-6 py-4 text-right text-lg text-rose-600">{formatCurrency(osExpense)}</td>
+                        <td colSpan={3} className="px-4 py-2 text-right text-[8px] uppercase">Soma das Despesas</td>
+                        <td className="px-4 py-2 text-right text-sm text-rose-600">{formatCurrency(osExpense)}</td>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
               </div>
 
-              {/* Divisão Nominal Entre Sócios (Ivo e Pedro) */}
-              <div className="bg-slate-900 rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-5">
-                   <Users className="w-64 h-64" />
-                </div>
-                
-                <div className="relative z-10">
-                  <div className="flex items-center gap-4 mb-10">
-                    <div className="p-3 bg-blue-500 rounded-2xl">
-                      <Scale className="w-8 h-8 text-white" />
+              {/* Divisão Nominal Ivo e Pedro - Compacto */}
+              <div className="bg-slate-900 rounded-[1.5rem] p-4 md:p-8 text-white shadow-2xl overflow-hidden print:bg-transparent print:border-2 print:border-slate-100">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-blue-500 rounded-lg">
+                      <Scale className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black uppercase tracking-tight">Divisão de Resultados</h3>
-                      <p className="text-blue-300 text-[10px] uppercase font-black tracking-widest">Partilha 50/50 com Reembolso de Gastos</p>
+                      <h3 className="text-lg font-black uppercase tracking-tight">Divisão Sociedade 50/50</h3>
+                      <p className="text-blue-300 text-[8px] uppercase font-black tracking-widest">Ajustes Nominais e Reembolsos</p>
                     </div>
-                  </div>
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {users.map((u) => {
                       const uTrans = osTransactions.filter(t => t.userId === u.id);
                       const uInc = uTrans.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
                       const uExp = uTrans.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
-                      
-                      // Lógica de fechamento:
-                      // Lucro partilhado + Despesas pagas pelo sócio (reembolso) - Entradas recebidas pelo sócio (abate)
                       const targetProfitShare = osProfit / 2;
                       const finalBalance = targetProfitShare + uExp - uInc;
 
                       return (
-                        <div key={u.id} className="bg-white/5 border border-white/10 p-8 rounded-[2rem] space-y-6">
+                        <div key={u.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-3 print:border-slate-200 print:text-black">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <img src={u.avatar} className="w-16 h-16 rounded-full border-2 border-blue-400" alt={u.name} />
+                            <div className="flex items-center gap-3">
+                              <img src={u.avatar} className="w-10 h-10 rounded-full border border-blue-400" alt={u.name} />
                               <div>
-                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-0.5">SÓCIO</span>
-                                <h5 className="text-xl font-black">{u.name}</h5>
+                                <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest block">SÓCIO</span>
+                                <h5 className="text-sm font-black">{u.name}</h5>
                               </div>
                             </div>
                             <div className="text-right">
-                              <span className="text-[8px] font-black text-slate-500 uppercase block mb-1">PARTE NO LUCRO</span>
-                              <span className="text-lg font-black text-blue-400">{formatCurrency(targetProfitShare)}</span>
+                              <span className="text-[7px] font-black text-slate-500 uppercase block mb-0.5">LUCRO</span>
+                              <span className="text-xs font-black text-blue-400">{formatCurrency(targetProfitShare)}</span>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4 py-6 border-y border-white/5">
+                          <div className="grid grid-cols-2 gap-2 py-2 border-y border-white/5 print:border-slate-100">
                             <div>
-                              <p className="text-[9px] font-black text-rose-400 uppercase mb-1">GASTOU (REEMBOLSO)</p>
-                              <p className="text-base font-black text-rose-300">{formatCurrency(uExp)}</p>
+                              <p className="text-[7px] font-black text-rose-400 uppercase">GASTOU (+)</p>
+                              <p className="text-[10px] font-black">{formatCurrency(uExp)}</p>
                             </div>
                             <div>
-                              <p className="text-[9px] font-black text-emerald-400 uppercase mb-1">RECEBEU (ABATER)</p>
-                              <p className="text-base font-black text-emerald-300">{formatCurrency(uInc)}</p>
+                              <p className="text-[7px] font-black text-emerald-400 uppercase">RECEBEU (-)</p>
+                              <p className="text-[10px] font-black">{formatCurrency(uInc)}</p>
                             </div>
                           </div>
 
-                          <div className={`p-6 rounded-2xl flex justify-between items-center ${finalBalance >= 0 ? 'bg-emerald-600' : 'bg-rose-600'} shadow-lg`}>
-                            <div className="flex items-center gap-3">
-                                {finalBalance >= 0 ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
-                                <span className="text-[10px] font-black uppercase tracking-widest">{finalBalance >= 0 ? 'Receber Total' : 'Pagar Ajuste'}</span>
-                            </div>
-                            <span className="text-2xl font-black tracking-tighter">{formatCurrency(Math.abs(finalBalance))}</span>
+                          <div className={`p-3 rounded-xl flex justify-between items-center ${finalBalance >= 0 ? 'bg-emerald-600/20 text-emerald-400' : 'bg-rose-600/20 text-rose-400'} border border-current print:bg-transparent`}>
+                            <span className="text-[8px] font-black uppercase">{finalBalance >= 0 ? 'Receber' : 'Pagar'}</span>
+                            <span className="text-sm font-black">{formatCurrency(Math.abs(finalBalance))}</span>
                           </div>
                         </div>
                       );
                     })}
-                  </div>
-
-                  <div className="mt-10 p-6 bg-white/5 border border-white/10 rounded-3xl text-center">
-                    <p className="text-[10px] text-blue-200 font-bold italic leading-relaxed">
-                      * O lucro líquido de {formatCurrency(osProfit)} foi dividido igualmente entre os sócios. <br/>
-                      Para garantir a justiça financeira, as despesas pagas por cada sócio são reembolsadas integralmente antes da partilha final.
-                    </p>
-                  </div>
                 </div>
               </div>
 
-              {/* Descrição dos Serviços no Final do Relatório */}
-              <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                  <FileText className="w-4 h-4" /> Detalhamento Técnico do Serviço
-                </h4>
-                <p className="text-slate-700 font-bold text-lg leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-100 italic">
+              {/* Detalhamento Técnico e Assinaturas (Imposto para o PDF) */}
+              <div className="bg-white p-4 md:p-8 rounded-[1.5rem] border border-slate-100">
+                <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Resumo dos Serviços</h4>
+                <p className="text-slate-700 font-bold text-xs leading-relaxed italic border-l-2 border-blue-500 pl-4">
                   "{selectedOS.description}"
                 </p>
               </div>
 
-              {/* Assinaturas (Apenas Impressão) */}
-              <div className="hidden print:grid grid-cols-2 gap-20 mt-32 px-10">
-                <div className="border-t border-slate-400 pt-4 text-center">
-                  <p className="font-black text-sm text-slate-900">Ivo junior</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Sócio Proprietário</p>
+              <div className="hidden print:grid grid-cols-2 gap-10 mt-8 px-4">
+                <div className="border-t border-slate-300 pt-2 text-center">
+                  <p className="font-black text-xs text-slate-900">Ivo junior</p>
+                  <p className="text-[7px] text-slate-400 uppercase">Sócio Proprietário</p>
                 </div>
-                <div className="border-t border-slate-400 pt-4 text-center">
-                  <p className="font-black text-sm text-slate-900">Pedro Augusto</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Sócio Proprietário</p>
+                <div className="border-t border-slate-300 pt-2 text-center">
+                  <p className="font-black text-xs text-slate-900">Pedro Augusto</p>
+                  <p className="text-[7px] text-slate-400 uppercase">Sócio Proprietário</p>
                 </div>
               </div>
             </div>
