@@ -3,19 +3,25 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JP Forro - Financeiro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            touch-action: manipulation;
+        }
         #root:empty { min-height: 100vh; background-color: #f8fafc; }
         
-        /* Ajustes de Responsividade e UI */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* Prevenir scroll horizontal e comportamentos estranhos em mobile */
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            height: 100%;
+        }
 
         /* Estilos de Impressão Ultra-Compactos */
         @media print {
@@ -49,17 +55,8 @@
             .rounded-[2rem], .rounded-[2.5rem], .rounded-[3rem], .rounded-3xl, .rounded-2xl {
                 border-radius: 8px !important;
             }
-            .shadow-sm, .shadow-xl, .shadow-2xl, .shadow-lg {
-                box-shadow: none !important;
-            }
             .p-4, .p-6, .p-8, .p-10, .p-12 {
                 padding: 8px !important;
-            }
-            .gap-4, .gap-6, .gap-8 {
-                gap: 6px !important;
-            }
-            .mb-4, .mb-6, .mb-8, .mb-10 {
-                margin-bottom: 6px !important;
             }
             table {
                 width: 100% !important;
@@ -72,10 +69,6 @@
             .break-inside-avoid {
                 page-break-inside: avoid;
             }
-            /* Forçar cores para o PDF */
-            .text-rose-600 { color: #dc2626 !important; }
-            .text-emerald-600 { color: #059669 !important; }
-            .text-blue-600 { color: #2563eb !important; }
         }
     </style>
 <script type="importmap">
@@ -95,5 +88,9 @@
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
+    <script>
+        // Limpar cache forçado se detectar nova versão (opcional)
+        console.log("JP Financeiro: Sistema Unificado pronto.");
+    </script>
 </body>
 </html>

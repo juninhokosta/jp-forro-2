@@ -4,13 +4,36 @@ import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, Catal
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const DB_PREFIX = 'jp_db_';
+
 const db = {
   save: (key: string, data: any) => {
-    localStorage.setItem(`jp_db_${key}`, JSON.stringify(data));
+    localStorage.setItem(`${DB_PREFIX}${key}`, JSON.stringify(data));
   },
   load: (key: string, defaultValue: any) => {
-    const saved = localStorage.getItem(`jp_db_${key}`);
+    const saved = localStorage.getItem(`${DB_PREFIX}${key}`);
     return saved ? JSON.parse(saved) : defaultValue;
+  },
+  exportAll: () => {
+    const data: Record<string, any> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(DB_PREFIX)) {
+        data[key] = localStorage.getItem(key);
+      }
+    }
+    return btoa(JSON.stringify(data));
+  },
+  importAll: (encodedData: string) => {
+    try {
+      const data = JSON.parse(atob(encodedData));
+      Object.keys(data).forEach(key => {
+        localStorage.setItem(key, data[key]);
+      });
+      window.location.reload();
+    } catch (e) {
+      throw new Error("Código de sincronização inválido.");
+    }
   }
 };
 
@@ -174,14 +197,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const removeCatalogItem = (id: string) => setCatalog(prev => prev.filter(i => i.id !== id));
 
+  // Sincronização
+  const exportData = () => db.exportAll();
+  const importData = (code: string) => db.importAll(code);
+
   return (
     <AppContext.Provider value={{ 
       currentUser, users, login, logout, changePassword, customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, deleteQuote, updateQuoteStatus,
-      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem
-    }}>
+      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem,
+      exportData, importData // Expondo para o Settings
+    } as any}>
       {children}
     </AppContext.Provider>
   );

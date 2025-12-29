@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Receipt, Briefcase, FileText, PieChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Receipt, Briefcase, FileText, PieChart, LogOut, Settings } from 'lucide-react';
 import { useApp } from '../AppContext';
 
 interface SidebarProps {
@@ -17,12 +17,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'expenses', label: 'Despesas', icon: Receipt },
     { id: 'quotes', label: 'Orçamentos', icon: FileText },
     { id: 'reports', label: 'Relatórios', icon: PieChart },
+    { id: 'settings', label: 'Configurações', icon: Settings },
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-slate-300 h-screen sticky top-0">
+    <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-slate-300 h-screen sticky top-0 shrink-0">
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h1 className="text-2xl font-black text-white flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-500 rounded-lg"></div>
           JP FORRO
         </h1>
