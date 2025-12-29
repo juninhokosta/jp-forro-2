@@ -4,71 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JP Forro - Financeiro</title>
+    <title>JP Forro - Financeiro Unificado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 8s linear infinite;
+        }
+
         body { 
             font-family: 'Inter', sans-serif; 
             -webkit-font-smoothing: antialiased; 
             touch-action: manipulation;
+            background-color: #f8fafc;
         }
         #root:empty { min-height: 100vh; background-color: #f8fafc; }
         
-        /* Prevenir scroll horizontal e comportamentos estranhos em mobile */
         html, body {
             overflow-x: hidden;
             width: 100%;
             height: 100%;
+            overscroll-behavior-y: contain;
         }
 
-        /* Estilos de Impressão Ultra-Compactos */
+        /* Melhoria de Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
         @media print {
-            @page {
-                margin: 0.5cm;
-                size: auto;
-            }
-            aside, header, nav, .no-print, button, .bottom-nav {
-                display: none !important;
-            }
-            main {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-                display: block !important;
-            }
-            body {
-                background-color: white !important;
-                font-size: 10pt !important;
-                color: black !important;
-            }
-            .bg-slate-50, .bg-slate-100, .bg-slate-900, .bg-blue-600, .bg-emerald-600 {
-                background-color: transparent !important;
-                color: black !important;
-                border: 1px solid #e2e8f0 !important;
-                box-shadow: none !important;
-            }
-            .text-white, .text-blue-400, .text-emerald-400, .text-slate-400 {
-                color: black !important;
-            }
-            .rounded-[2rem], .rounded-[2.5rem], .rounded-[3rem], .rounded-3xl, .rounded-2xl {
-                border-radius: 8px !important;
-            }
-            .p-4, .p-6, .p-8, .p-10, .p-12 {
-                padding: 8px !important;
-            }
-            table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-            }
-            th, td {
-                padding: 4px 8px !important;
-                border: 1px solid #cbd5e1 !important;
-            }
-            .break-inside-avoid {
-                page-break-inside: avoid;
-            }
+            @page { margin: 0.5cm; size: auto; }
+            aside, header, nav, .no-print, button, .bottom-nav { display: none !important; }
+            main { margin: 0 !important; padding: 0 !important; width: 100% !important; display: block !important; }
+            body { background-color: white !important; font-size: 10pt !important; color: black !important; }
+            .bg-slate-900, .bg-blue-600, .bg-emerald-600 { background-color: white !important; color: black !important; border: 1px solid #e2e8f0 !important; }
+            .rounded-[2rem], .rounded-[2.5rem], .rounded-[3rem] { border-radius: 8px !important; }
+            table { width: 100% !important; border-collapse: collapse !important; }
+            th, td { padding: 4px 8px !important; border: 1px solid #cbd5e1 !important; }
         }
     </style>
 <script type="importmap">
@@ -88,9 +66,5 @@
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
-    <script>
-        // Limpar cache forçado se detectar nova versão (opcional)
-        console.log("JP Financeiro: Sistema Unificado pronto.");
-    </script>
 </body>
 </html>

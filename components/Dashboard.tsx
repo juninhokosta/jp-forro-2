@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useApp } from '../AppContext';
-import { TrendingUp, TrendingDown, Users, Wallet, CheckCircle2, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Wallet, CheckCircle2, Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { OSStatus } from '../types';
 
@@ -45,15 +45,28 @@ const Dashboard: React.FC = () => {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
-    <div className="space-y-6">
-      {/* KPI Cards Responsivos: 2 colunas no mobile, 4 no desktop */}
+    <div className="space-y-6 pb-20">
+      {/* Alerta de Sincronização Unificada */}
+      <div className="bg-slate-900 p-4 rounded-2xl flex items-center justify-between border border-slate-800 shadow-xl no-print">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+            <RefreshCw className="w-4 h-4 animate-spin-slow" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-white uppercase tracking-widest">Sincronização de Dispositivos</p>
+            <p className="text-[9px] text-slate-400 font-bold">Lembre-se de unificar os dados do Celular com o PC hoje.</p>
+          </div>
+        </div>
+        <AlertCircle className="w-5 h-5 text-slate-600" />
+      </div>
+
+      {/* KPI Cards Responsivos */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <div className="p-1.5 md:p-2 bg-emerald-50 rounded-lg">
               <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-emerald-600" />
             </div>
-            <span className="text-[9px] md:text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
           </div>
           <p className="text-slate-500 text-[10px] md:text-sm font-black uppercase tracking-tighter">Entradas</p>
           <h3 className="text-lg md:text-2xl font-black text-slate-900 mt-1 truncate">{formatCurrency(totals.income)}</h3>
@@ -64,7 +77,6 @@ const Dashboard: React.FC = () => {
             <div className="p-1.5 md:p-2 bg-rose-50 rounded-lg">
               <TrendingDown className="w-4 h-4 md:w-6 md:h-6 text-rose-600" />
             </div>
-            <span className="text-[9px] md:text-xs font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">-5%</span>
           </div>
           <p className="text-slate-500 text-[10px] md:text-sm font-black uppercase tracking-tighter">Saídas</p>
           <h3 className="text-lg md:text-2xl font-black text-slate-900 mt-1 truncate">{formatCurrency(totals.expense)}</h3>
@@ -92,11 +104,10 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Charts Section: Oculto ou simplificado no mobile se necessário, mas Recharts é responsivo */}
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <h3 className="text-base md:text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-500" />
-            Sociedade
+            Sociedade (Este Mês)
           </h3>
           <div className="h-64 md:h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -116,27 +127,26 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Atividades Recentes: Mais compacto no mobile */}
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-base md:text-lg font-black text-slate-800">Recentes</h3>
+            <h3 className="text-base md:text-lg font-black text-slate-800">Atividades Recentes</h3>
           </div>
           <div className="space-y-3">
             {currentMonthTransactions.length === 0 && (
-                <p className="text-center text-slate-500 py-10 text-xs">Nenhuma movimentação.</p>
+                <p className="text-center text-slate-500 py-10 text-xs font-bold uppercase tracking-widest opacity-30">Nenhuma movimentação este mês.</p>
             )}
             {currentMonthTransactions.slice(0, 5).map(t => (
-              <div key={t.id} className="flex items-center justify-between p-2 md:p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100">
+              <div key={t.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`p-1.5 md:p-2 rounded-lg shrink-0 ${t.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                    {t.type === 'INCOME' ? <TrendingUp className="w-4 h-4 md:w-5 md:h-5" /> : <TrendingDown className="w-4 h-4 md:w-5 md:h-5" />}
+                  <div className={`p-2 rounded-lg shrink-0 ${t.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                    {t.type === 'INCOME' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs md:text-sm font-black text-slate-800 truncate">{t.description}</p>
-                    <p className="text-[9px] md:text-xs text-slate-500 truncate">{t.userName} • {new Date(t.date).toLocaleDateString()}</p>
+                    <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tighter">{t.description}</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase">{t.userName} • {new Date(t.date).toLocaleDateString()}</p>
                   </div>
                 </div>
-                <p className={`font-black text-xs md:text-sm shrink-0 ml-2 ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <p className={`font-black text-xs shrink-0 ml-2 ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
                    {formatCurrency(t.amount)}
                 </p>
               </div>
