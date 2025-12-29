@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useApp } from '../AppContext';
-import { TrendingUp, TrendingDown, Users, Wallet, CheckCircle2, Clock, RefreshCw, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Wallet, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { OSStatus } from '../types';
 
@@ -46,20 +46,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Alerta de Sincronização Unificada */}
-      <div className="bg-slate-900 p-4 rounded-2xl flex items-center justify-between border border-slate-800 shadow-xl no-print">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
-            <RefreshCw className="w-4 h-4 animate-spin-slow" />
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-white uppercase tracking-widest">Sincronização de Dispositivos</p>
-            <p className="text-[9px] text-slate-400 font-bold">Lembre-se de unificar os dados do Celular com o PC hoje.</p>
-          </div>
-        </div>
-        <AlertCircle className="w-5 h-5 text-slate-600" />
-      </div>
-
       {/* KPI Cards Responsivos */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">

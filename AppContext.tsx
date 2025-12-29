@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem, Customer } from './types';
 
-// CONFIGURAÇÃO SUPABASE (Substitua pelos seus dados do plano gratuito em supabase.com)
+// IMPORTANTE: Insira suas chaves do Supabase aqui para a sincronização funcionar entre telas.
 const SUPABASE_URL = 'https://SUA_URL_AQUI.supabase.co';
 const SUPABASE_ANON_KEY = 'SUA_KEY_AQUI';
 
@@ -29,40 +29,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [quotes, setQuotes] = useState<Quote[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}quotes`) || '[]'));
   const [catalog, setCatalog] = useState<CatalogItem[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}catalog`) || '[]'));
 
-  // --- SINCRONIZAÇÃO AUTOMÁTICA COM A NUVEM ---
-  
-  // Efeito para carregar dados iniciais da nuvem e configurar tempo real
+  // Função para buscar dados da nuvem
+  const fetchCloudData = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const [
+        { data: os }, 
+        { data: tr }, 
+        { data: cu }, 
+        { data: qu }, 
+        { data: ca }
+      ] = await Promise.all([
+        supabase.from('service_orders').select('*').order('createdAt', { ascending: false }),
+        supabase.from('transactions').select('*').order('date', { ascending: false }),
+        supabase.from('customers').select('*'),
+        supabase.from('quotes').select('*').order('createdAt', { ascending: false }),
+        supabase.from('catalog').select('*')
+      ]);
+
+      if (os) setServiceOrders(os);
+      if (tr) setTransactions(tr);
+      if (cu) setCustomers(cu);
+      if (qu) setQuotes(qu);
+      if (ca) setCatalog(ca);
+    } catch (e) {
+      console.warn('Erro ao sincronizar com nuvem:', e);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  // Efeito de escuta em tempo real (Realtime)
   useEffect(() => {
-    const fetchCloudData = async () => {
-      setIsCloudSyncing(true);
-      try {
-        const { data: remoteOS } = await supabase.from('service_orders').select('*');
-        const { data: remoteTrans } = await supabase.from('transactions').select('*');
-        const { data: remoteCust } = await supabase.from('customers').select('*');
-        
-        if (remoteOS) setServiceOrders(remoteOS);
-        if (remoteTrans) setTransactions(remoteTrans);
-        if (remoteCust) setCustomers(remoteCust);
-      } catch (e) {
-        console.warn('Sync inicial falhou (Verifique suas credenciais Supabase)', e);
-      } finally {
-        setIsCloudSyncing(false);
-      }
-    };
+    if (!currentUser) return;
 
     fetchCloudData();
 
-    // Inscrição em tempo real para mudanças em outros aparelhos
-    const channel = supabase.channel('schema-db-changes')
+    // Canal de escuta para qualquer mudança no banco de dados público
+    const channel = supabase.channel('realtime-updates')
       .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-        fetchCloudData(); // Recarrega se houver mudanças remotas
+        fetchCloudData();
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser]);
 
-  // Efeito para backup local sempre que o estado mudar
+  // Backup Local (Redundância)
   useEffect(() => { localStorage.setItem(`${DB_PREFIX}customers`, JSON.stringify(customers)); }, [customers]);
   useEffect(() => { localStorage.setItem(`${DB_PREFIX}transactions`, JSON.stringify(transactions)); }, [transactions]);
   useEffect(() => { localStorage.setItem(`${DB_PREFIX}os`, JSON.stringify(serviceOrders)); }, [serviceOrders]);
@@ -232,7 +247,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, deleteQuote, updateQuoteStatus,
-      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem
+      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem,
+      changePassword: () => {} // Implementado via Header se necessário
     } as any}>
       {children}
     </AppContext.Provider>

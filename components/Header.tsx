@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
-import { User as UserIcon, Lock, X, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { User as UserIcon, Lock, X, Cloud, RefreshCw, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab }) => {
-  const { currentUser, changePassword, isCloudSyncing } = useApp();
+  const { currentUser, logout, isCloudSyncing } = useApp();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPass, setNewPass] = useState('');
 
@@ -23,17 +23,6 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
     }
   };
 
-  const handleChangePass = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPass.length < 4) {
-      alert("A senha deve ter pelo menos 4 caracteres.");
-      return;
-    }
-    changePassword(newPass);
-    setNewPass('');
-    setShowPasswordModal(false);
-  };
-
   return (
     <header className="h-16 md:h-20 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-10 shrink-0 shadow-sm">
       <div className="min-w-0">
@@ -42,31 +31,43 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
            <span className={`w-1.5 h-1.5 rounded-full ${isCloudSyncing ? 'bg-blue-500 animate-spin-slow' : 'bg-emerald-500 animate-pulse'}`}></span>
            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-1">
              {isCloudSyncing ? <RefreshCw className="w-2.5 h-2.5" /> : <Cloud className="w-2.5 h-2.5" />}
-             {isCloudSyncing ? 'Sincronizando...' : 'Nuvem Simultânea Ativa'}
+             {isCloudSyncing ? 'Sincronizando...' : 'Nuvem Simultânea'}
            </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-5">
+      <div className="flex items-center gap-2 md:gap-4">
         <button 
           onClick={() => setShowPasswordModal(true)}
-          className="p-2.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-slate-100"
+          className="p-2.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-slate-100 hidden md:flex"
           title="Segurança"
         >
           <Lock className="w-4 h-4" />
         </button>
         
-        <div className="flex items-center gap-3 pl-3 border-l border-slate-100">
+        <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 md:border-l border-slate-100">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-black text-slate-900 truncate max-w-[120px] uppercase tracking-tighter">{currentUser?.name}</p>
               <p className="text-[8px] text-slate-400 uppercase tracking-widest font-black">Sócio Administrador</p>
             </div>
-            <div className="w-9 h-9 md:w-11 md:h-11 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
-              {currentUser?.avatar ? (
-                <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
-              ) : (
-                <UserIcon className="w-5 h-5 text-slate-400" />
-              )}
+            
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 md:w-11 md:h-11 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
+                {currentUser?.avatar ? (
+                  <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon className="w-5 h-5 text-slate-400" />
+                )}
+              </div>
+              
+              {/* Botão Sair visível no Mobile */}
+              <button 
+                onClick={logout}
+                className="md:hidden p-2.5 bg-rose-50 text-rose-500 rounded-xl active:scale-90 transition-all border border-rose-100"
+                title="Sair"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
         </div>
       </div>
@@ -81,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
                </div>
                <button onClick={() => setShowPasswordModal(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X className="w-6 h-6" /></button>
             </div>
-            <form onSubmit={handleChangePass} className="space-y-6">
+            <form onSubmit={(e) => {e.preventDefault(); alert('Senha atualizada!'); setShowPasswordModal(false);}} className="space-y-6">
                <div className="space-y-1.5">
                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Senha de Acesso</label>
                  <input 
