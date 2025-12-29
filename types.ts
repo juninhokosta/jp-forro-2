@@ -80,6 +80,7 @@ export interface ServiceOrder {
   createdAt: string;
   expectedDate?: string;
   totalValue: number;
+  archived?: boolean; // Novo campo
 }
 
 export interface AppContextType {
@@ -87,7 +88,7 @@ export interface AppContextType {
   users: User[];
   login: (email: string, password: string) => void;
   logout: () => void;
-  changePassword: (newPassword: string) => void;
+  isCloudSyncing: boolean;
   customers: Customer[];
   addCustomer: (c: Omit<Customer, 'id' | 'createdAt'>) => string;
   transactions: Transaction[];
@@ -98,6 +99,7 @@ export interface AppContextType {
   addOS: (os: Omit<ServiceOrder, 'id' | 'progress' | 'createdAt'>) => void;
   updateOS: (id: string, os: Partial<ServiceOrder>) => void;
   deleteOS: (id: string) => void;
+  archiveOS: (id: string, archived: boolean) => void; // Nova função
   updateOSStatus: (id: string, status: OSStatus) => void;
   createOSFromQuote: (quote: Quote) => void;
   quotes: Quote[];

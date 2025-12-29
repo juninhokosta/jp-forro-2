@@ -29,7 +29,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [quotes, setQuotes] = useState<Quote[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}quotes`) || '[]'));
   const [catalog, setCatalog] = useState<CatalogItem[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}catalog`) || '[]'));
 
-  // Função para buscar dados da nuvem
   const fetchCloudData = async () => {
     setIsCloudSyncing(true);
     try {
@@ -59,30 +58,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Efeito de escuta em tempo real (Realtime)
   useEffect(() => {
     if (!currentUser) return;
-
     fetchCloudData();
-
-    // Canal de escuta para qualquer mudança no banco de dados público
     const channel = supabase.channel('realtime-updates')
       .on('postgres_changes', { event: '*', schema: 'public' }, () => {
         fetchCloudData();
       })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [currentUser]);
 
-  // Backup Local (Redundância)
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}customers`, JSON.stringify(customers)); }, [customers]);
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}transactions`, JSON.stringify(transactions)); }, [transactions]);
   useEffect(() => { localStorage.setItem(`${DB_PREFIX}os`, JSON.stringify(serviceOrders)); }, [serviceOrders]);
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}quotes`, JSON.stringify(quotes)); }, [quotes]);
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}catalog`, JSON.stringify(catalog)); }, [catalog]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}transactions`, JSON.stringify(transactions)); }, [transactions]);
 
   const login = (emailInput: string, passwordInput: string) => {
     const user = users.find(u => u.email.toLowerCase() === emailInput.toLowerCase());
@@ -136,7 +124,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addOS = (os: Omit<ServiceOrder, 'id' | 'progress' | 'createdAt'>) => {
-    const newOS = { ...os, id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, progress: 0, createdAt: new Date().toISOString() };
+    const newOS = { ...os, id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, progress: 0, createdAt: new Date().toISOString(), archived: false };
     setServiceOrders(prev => [newOS, ...prev]);
     saveToCloud('service_orders', newOS);
   };
@@ -144,6 +132,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateOS = (id: string, updates: Partial<ServiceOrder>) => {
     setServiceOrders(prev => {
       const updated = prev.map(os => os.id === id ? { ...os, ...updates } : os);
+      const osToSave = updated.find(i => i.id === id);
+      if (osToSave) saveToCloud('service_orders', osToSave);
+      return updated;
+    });
+  };
+
+  const archiveOS = (id: string, archived: boolean) => {
+    setServiceOrders(prev => {
+      const updated = prev.map(os => os.id === id ? { ...os, archived } : os);
       const osToSave = updated.find(i => i.id === id);
       if (osToSave) saveToCloud('service_orders', osToSave);
       return updated;
@@ -159,7 +156,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setServiceOrders(prev => {
       const updated = prev.map(os => {
         if (os.id === id) {
-          let progress = 0;
+          let progress = os.progress;
           if (status === OSStatus.QUOTED) progress = 10;
           else if (status === OSStatus.APPROVED) progress = 30;
           else if (status === OSStatus.IN_PROGRESS) progress = 60;
@@ -188,7 +185,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       progress: 30,
       createdAt: new Date().toISOString(),
       expectedDate: new Date().toISOString().split('T')[0],
-      totalValue: quote.total
+      totalValue: quote.total,
+      archived: false
     };
     setServiceOrders(prev => [newOS, ...prev]);
     saveToCloud('service_orders', newOS);
@@ -245,10 +243,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentUser, users, login, logout, isCloudSyncing,
       customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
-      serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
+      serviceOrders, addOS, updateOS, deleteOS, archiveOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, deleteQuote, updateQuoteStatus,
       catalog, addCatalogItem, updateCatalogItem, removeCatalogItem,
-      changePassword: () => {} // Implementado via Header se necessário
+      changePassword: () => {}
     } as any}>
       {children}
     </AppContext.Provider>
