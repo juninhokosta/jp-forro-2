@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem, Customer } from './types';
 
-// IMPORTANTE: Insira suas chaves do Supabase aqui para a sincronização funcionar entre telas.
+// IMPORTANTE: Para sincronização simultânea, crie uma conta gratuita no Supabase e cole os dados aqui.
 const SUPABASE_URL = 'https://SUA_URL_AQUI.supabase.co';
 const SUPABASE_ANON_KEY = 'SUA_KEY_AQUI';
 
@@ -29,15 +29,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [quotes, setQuotes] = useState<Quote[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}quotes`) || '[]'));
   const [catalog, setCatalog] = useState<CatalogItem[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}catalog`) || '[]'));
 
-  const fetchCloudData = async () => {
+  // Função central de busca
+  const fetchAllData = async () => {
+    if (!currentUser) return;
     setIsCloudSyncing(true);
     try {
       const [
-        { data: os }, 
-        { data: tr }, 
-        { data: cu }, 
-        { data: qu }, 
-        { data: ca }
+        { data: os }, { data: tr }, { data: cu }, { data: qu }, { data: ca }
       ] = await Promise.all([
         supabase.from('service_orders').select('*').order('createdAt', { ascending: false }),
         supabase.from('transactions').select('*').order('date', { ascending: false }),
@@ -52,25 +50,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (qu) setQuotes(qu);
       if (ca) setCatalog(ca);
     } catch (e) {
-      console.warn('Erro ao sincronizar com nuvem:', e);
+      console.warn('Erro na nuvem. Verifique suas chaves Supabase:', e);
     } finally {
       setIsCloudSyncing(false);
     }
   };
 
+  // Efeito de escuta simultânea (REALTIME)
   useEffect(() => {
     if (!currentUser) return;
-    fetchCloudData();
-    const channel = supabase.channel('realtime-updates')
+
+    fetchAllData();
+
+    // Inscrição em tempo real para todas as tabelas
+    const channel = supabase.channel('db-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-        fetchCloudData();
+        fetchAllData(); // Recarrega tudo instantaneamente ao detectar mudança externa
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentUser]);
 
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}os`, JSON.stringify(serviceOrders)); }, [serviceOrders]);
+  // Backup Local (Redundância caso fique sem internet)
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}customers`, JSON.stringify(customers)); }, [customers]);
   useEffect(() => { localStorage.setItem(`${DB_PREFIX}transactions`, JSON.stringify(transactions)); }, [transactions]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}os`, JSON.stringify(serviceOrders)); }, [serviceOrders]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}quotes`, JSON.stringify(quotes)); }, [quotes]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}catalog`, JSON.stringify(catalog)); }, [catalog]);
 
   const login = (emailInput: string, passwordInput: string) => {
     const user = users.find(u => u.email.toLowerCase() === emailInput.toLowerCase());
@@ -90,7 +99,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await supabase.from(table).upsert(payload);
     } catch (e) {
-      console.error('Falha ao salvar na nuvem:', e);
+      console.error('Falha ao salvar nuvem:', e);
     }
   };
 
@@ -104,12 +113,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addTransaction = (t: Omit<Transaction, 'id' | 'userId' | 'userName'>) => {
     if (!currentUser) return;
-    const newTrans = { ...t, id: `TR-${Math.random().toString(36).substr(2, 7).toUpperCase()}`, userId: currentUser.id, userName: currentUser.name };
+    const newTrans = { 
+      ...t, 
+      id: `TR-${Math.random().toString(36).substr(2, 7).toUpperCase()}`, 
+      userId: currentUser.id, 
+      userName: currentUser.name 
+    };
     setTransactions(prev => [newTrans, ...prev]);
     saveToCloud('transactions', newTrans);
   };
 
-  const updateTransaction = (id: string, t: Partial<Transaction>) => {
+  const deleteTransaction = async (id: string) => {
+    setTransactions(prev => prev.filter(item => item.id !== id));
+    await supabase.from('transactions').delete().eq('id', id);
+  };
+
+  const updateTransaction = async (id: string, t: Partial<Transaction>) => {
     setTransactions(prev => {
       const updated = prev.map(item => item.id === id ? { ...item, ...t } : item);
       const itemToSave = updated.find(i => i.id === id);
@@ -118,13 +137,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const deleteTransaction = async (id: string) => {
-    setTransactions(prev => prev.filter(item => item.id !== id));
-    await supabase.from('transactions').delete().eq('id', id);
-  };
-
   const addOS = (os: Omit<ServiceOrder, 'id' | 'progress' | 'createdAt'>) => {
-    const newOS = { ...os, id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, progress: 0, createdAt: new Date().toISOString(), archived: false };
+    const newOS = { 
+      ...os, 
+      id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, 
+      progress: 0, 
+      createdAt: new Date().toISOString(),
+      archived: false 
+    };
     setServiceOrders(prev => [newOS, ...prev]);
     saveToCloud('service_orders', newOS);
   };
