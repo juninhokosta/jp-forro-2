@@ -3,13 +3,12 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem, Customer } from './types';
 
-// IMPORTANTE: Para sincronização simultânea, crie uma conta gratuita no Supabase e cole os dados aqui.
-const SUPABASE_URL = 'https://SUA_URL_AQUI.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA_KEY_AQUI';
+// Credenciais do projeto Supabase fornecidas
+const SUPABASE_URL = 'https://kerwyrvstnziyusstgkg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_17HEmrQdsefxmirq89rMhw_ftCdJjOU';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const AppContext = createContext<AppContextType | undefined>(undefined);
-const DB_PREFIX = 'jp_db_';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
@@ -23,13 +22,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     { id: 'socio-2', name: 'Pedro Augusto', email: 'pedro@jpforro.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro', password: '123456' }
   ]);
 
-  const [customers, setCustomers] = useState<Customer[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}customers`) || '[]'));
-  const [transactions, setTransactions] = useState<Transaction[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}transactions`) || '[]'));
-  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}os`) || '[]'));
-  const [quotes, setQuotes] = useState<Quote[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}quotes`) || '[]'));
-  const [catalog, setCatalog] = useState<CatalogItem[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}catalog`) || '[]'));
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
 
-  // Função central de busca
   const fetchAllData = async () => {
     if (!currentUser) return;
     setIsCloudSyncing(true);
@@ -50,22 +48,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (qu) setQuotes(qu);
       if (ca) setCatalog(ca);
     } catch (e) {
-      console.warn('Erro na nuvem. Verifique suas chaves Supabase:', e);
+      console.error('Erro de sincronização Supabase:', e);
     } finally {
       setIsCloudSyncing(false);
     }
   };
 
-  // Efeito de escuta simultânea (REALTIME)
+  useEffect(() => {
+    // Escuta mudanças de autenticação do Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        const userEmail = session.user.email?.toLowerCase();
+        const allowedUser = users.find(u => u.email.toLowerCase() === userEmail);
+        
+        if (allowedUser) {
+          const userSession = { 
+            ...allowedUser, 
+            id: session.user.id, 
+            avatar: session.user.user_metadata.avatar_url || allowedUser.avatar 
+          };
+          setCurrentUser(userSession);
+          localStorage.setItem('jp_user_session', JSON.stringify(userSession));
+        } else {
+          supabase.auth.signOut();
+          alert('Acesso negado. Apenas Ivo e Pedro podem acessar este sistema.');
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [users]);
+
   useEffect(() => {
     if (!currentUser) return;
-
     fetchAllData();
 
-    // Inscrição em tempo real para todas as tabelas
+    // Canal de Realtime para sincronização simultânea
     const channel = supabase.channel('db-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-        fetchAllData(); // Recarrega tudo instantaneamente ao detectar mudança externa
+        fetchAllData();
       })
       .subscribe();
 
@@ -74,14 +95,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [currentUser]);
 
-  // Backup Local (Redundância caso fique sem internet)
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}customers`, JSON.stringify(customers)); }, [customers]);
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}transactions`, JSON.stringify(transactions)); }, [transactions]);
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}os`, JSON.stringify(serviceOrders)); }, [serviceOrders]);
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}quotes`, JSON.stringify(quotes)); }, [quotes]);
-  useEffect(() => { localStorage.setItem(`${DB_PREFIX}catalog`, JSON.stringify(catalog)); }, [catalog]);
-
-  const login = (emailInput: string, passwordInput: string) => {
+  const login = async (emailInput: string, passwordInput: string) => {
+    // Simulação ou login via Supabase Auth
     const user = users.find(u => u.email.toLowerCase() === emailInput.toLowerCase());
     if (!user) throw new Error("Usuário não cadastrado.");
     if (user.password === passwordInput) {
@@ -90,16 +105,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else throw new Error("Senha incorreta.");
   };
 
-  const logout = () => {
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    });
+    if (error) throw error;
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setCurrentUser(null);
     localStorage.removeItem('jp_user_session');
   };
 
   const saveToCloud = async (table: string, payload: any) => {
     try {
-      await supabase.from(table).upsert(payload);
+      const { error } = await supabase.from(table).upsert(payload);
+      if (error) throw error;
     } catch (e) {
-      console.error('Falha ao salvar nuvem:', e);
+      console.error(`Erro ao salvar em ${table}:`, e);
     }
   };
 
@@ -123,11 +148,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveToCloud('transactions', newTrans);
   };
 
-  const deleteTransaction = async (id: string) => {
-    setTransactions(prev => prev.filter(item => item.id !== id));
-    await supabase.from('transactions').delete().eq('id', id);
-  };
-
   const updateTransaction = async (id: string, t: Partial<Transaction>) => {
     setTransactions(prev => {
       const updated = prev.map(item => item.id === id ? { ...item, ...t } : item);
@@ -135,6 +155,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (itemToSave) saveToCloud('transactions', itemToSave);
       return updated;
     });
+  };
+
+  const deleteTransaction = async (id: string) => {
+    setTransactions(prev => prev.filter(item => item.id !== id));
+    await supabase.from('transactions').delete().eq('id', id);
   };
 
   const addOS = (os: Omit<ServiceOrder, 'id' | 'progress' | 'createdAt'>) => {
@@ -214,7 +239,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addQuote = (q: Omit<Quote, 'id' | 'createdAt' | 'status'>) => {
-    const newQuote = { ...q, id: `ORC-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'PENDING' as const };
+    const newQuote = { 
+      ...q, 
+      id: `ORC-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, 
+      createdAt: new Date().toISOString(), 
+      status: 'PENDING' as const 
+    };
     setQuotes(prev => [newQuote, ...prev]);
     saveToCloud('quotes', newQuote);
   };
@@ -260,13 +290,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{ 
-      currentUser, users, login, logout, isCloudSyncing,
+      currentUser, users, login, loginWithGoogle, logout, isCloudSyncing,
       customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, deleteOS, archiveOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, deleteQuote, updateQuoteStatus,
       catalog, addCatalogItem, updateCatalogItem, removeCatalogItem,
-      changePassword: () => {}
     } as any}>
       {children}
     </AppContext.Provider>
@@ -275,6 +304,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useApp = () => {
   const context = useContext(AppContext);
-  if (!context) throw new Error('useApp error');
+  if (!context) throw new Error('useApp deve ser usado dentro de AppProvider');
   return context;
 };
