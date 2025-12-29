@@ -19,20 +19,45 @@ const db = {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key?.startsWith(DB_PREFIX)) {
-        data[key] = localStorage.getItem(key);
+        data[key] = JSON.parse(localStorage.getItem(key) || 'null');
       }
     }
     return btoa(JSON.stringify(data));
   },
-  importAll: (encodedData: string) => {
+  // NOVA FUNÇÃO: Fusão Inteligente de Dados
+  mergeAll: (encodedData: string) => {
     try {
-      const data = JSON.parse(atob(encodedData));
-      Object.keys(data).forEach(key => {
-        localStorage.setItem(key, data[key]);
+      const remoteData = JSON.parse(atob(encodedData));
+      
+      const mergeArrays = (localKey: string, remoteKey: string) => {
+        const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+        const remote = remoteData[remoteKey] ? (typeof remoteData[remoteKey] === 'string' ? JSON.parse(remoteData[remoteKey]) : remoteData[remoteKey]) : [];
+        
+        // Unir por ID, mantendo sempre o mais recente se houver duplicata
+        const map = new Map();
+        local.forEach((item: any) => map.set(item.id, item));
+        remote.forEach((item: any) => map.set(item.id, item));
+        
+        return Array.from(map.values());
+      };
+
+      const keys = [
+        { local: `${DB_PREFIX}customers`, remote: `${DB_PREFIX}customers` },
+        { local: `${DB_PREFIX}transactions`, remote: `${DB_PREFIX}transactions` },
+        { local: `${DB_PREFIX}os`, remote: `${DB_PREFIX}os` },
+        { local: `${DB_PREFIX}quotes`, remote: `${DB_PREFIX}quotes` },
+        { local: `${DB_PREFIX}catalog`, remote: `${DB_PREFIX}catalog` },
+      ];
+
+      keys.forEach(key => {
+        const merged = mergeArrays(key.local, key.remote);
+        localStorage.setItem(key.local, JSON.stringify(merged));
       });
+
       window.location.reload();
     } catch (e) {
-      throw new Error("Código de sincronização inválido.");
+      console.error(e);
+      throw new Error("Falha na unificação: Código inválido ou corrompido.");
     }
   }
 };
@@ -42,20 +67,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const loaded = db.load('users', []);
     if (loaded.length === 0) {
       return [
-        {
-          id: 'socio-1',
-          name: 'Ivo junior',
-          email: 'ivo@jpforro.com',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivo',
-          password: '123456'
-        },
-        {
-          id: 'socio-2',
-          name: 'Pedro Augusto',
-          email: 'pedro@jpforro.com',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro',
-          password: '123456'
-        }
+        { id: 'socio-1', name: 'Ivo junior', email: 'ivo@jpforro.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivo', password: '123456' },
+        { id: 'socio-2', name: 'Pedro Augusto', email: 'pedro@jpforro.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro', password: '123456' }
       ];
     }
     return loaded;
@@ -79,11 +92,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => { db.save('users', users); }, [users]);
   useEffect(() => { 
-    if (currentUser) {
-      localStorage.setItem('jp_user_session', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('jp_user_session');
-    }
+    if (currentUser) localStorage.setItem('jp_user_session', JSON.stringify(currentUser));
+    else localStorage.removeItem('jp_user_session');
   }, [currentUser]);
   useEffect(() => { db.save('customers', customers); }, [customers]);
   useEffect(() => { db.save('transactions', transactions); }, [transactions]);
@@ -94,16 +104,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const login = (emailInput: string, passwordInput: string) => {
     const email = emailInput.toLowerCase();
     let user = users.find(u => u.email.toLowerCase() === email);
-    if (!user) {
-       throw new Error("Usuário não cadastrado.");
-    } else {
-      if (user.password === passwordInput) setCurrentUser(user);
-      else throw new Error("Senha incorreta.");
-    }
+    if (!user) throw new Error("Usuário não cadastrado.");
+    if (user.password === passwordInput) setCurrentUser(user);
+    else throw new Error("Senha incorreta.");
   };
 
   const logout = () => setCurrentUser(null);
-
   const changePassword = (newPassword: string) => {
     if (!currentUser) return;
     const updatedUsers = users.map(u => u.id === currentUser.id ? { ...u, password: newPassword } : u);
@@ -113,14 +119,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addCustomer = (c: Omit<Customer, 'id' | 'createdAt'>): string => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = `CUST-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
     setCustomers(prev => [...prev, { ...c, id, createdAt: new Date().toISOString() }]);
     return id;
   };
 
   const addTransaction = (t: Omit<Transaction, 'id' | 'userId' | 'userName'>) => {
     if (!currentUser) return;
-    setTransactions(prev => [{ ...t, id: Math.random().toString(36).substr(2, 9), userId: currentUser.id, userName: currentUser.name }, ...prev]);
+    setTransactions(prev => [{ ...t, id: `TR-${Math.random().toString(36).substr(2, 7).toUpperCase()}`, userId: currentUser.id, userName: currentUser.name }, ...prev]);
   };
 
   const updateTransaction = (id: string, t: Partial<Transaction>) => {
@@ -137,9 +143,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setServiceOrders(prev => prev.map(os => os.id === id ? { ...os, ...updates } : os));
   };
 
-  const deleteOS = (id: string) => {
-    setServiceOrders(prev => prev.filter(os => os.id !== id));
-  };
+  const deleteOS = (id: string) => setServiceOrders(prev => prev.filter(os => os.id !== id));
 
   const updateOSStatus = (id: string, status: OSStatus) => {
     setServiceOrders(prev => prev.map(os => {
@@ -164,7 +168,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       customerName: quote.customerName,
       customerContact: quote.customerContact,
       customerAddress: customer?.address || '',
-      description: quote.items.map(i => `${i.quantity}x ${i.name}`).join(', ') + (quote.observations ? ` | Obs: ${quote.observations}` : ''),
+      description: quote.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
       status: OSStatus.APPROVED,
       progress: 30,
       createdAt: new Date().toISOString(),
@@ -179,16 +183,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setQuotes(prev => [{ ...q, id: `ORC-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'PENDING' }, ...prev]);
   };
 
-  const deleteQuote = (id: string) => {
-    setQuotes(prev => prev.filter(q => q.id !== id));
-  };
+  const deleteQuote = (id: string) => setQuotes(prev => prev.filter(q => q.id !== id));
 
   const updateQuoteStatus = (id: string, status: Quote['status']) => {
     setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
   };
 
   const addCatalogItem = (item: Omit<CatalogItem, 'id'>) => {
-    setCatalog(prev => [...prev, { ...item, id: Math.random().toString(36).substr(2, 9) }]);
+    setCatalog(prev => [...prev, { ...item, id: `CAT-${Math.random().toString(36).substr(2, 5).toUpperCase()}` }]);
   };
 
   const updateCatalogItem = (id: string, item: Partial<CatalogItem>) => {
@@ -197,9 +199,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const removeCatalogItem = (id: string) => setCatalog(prev => prev.filter(i => i.id !== id));
 
-  // Sincronização
   const exportData = () => db.exportAll();
-  const importData = (code: string) => db.importAll(code);
+  const importData = (code: string) => db.mergeAll(code); // Alterado para merge inteligente
 
   return (
     <AppContext.Provider value={{ 
@@ -208,7 +209,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, deleteQuote, updateQuoteStatus,
       catalog, addCatalogItem, updateCatalogItem, removeCatalogItem,
-      exportData, importData // Expondo para o Settings
+      exportData, importData
     } as any}>
       {children}
     </AppContext.Provider>
