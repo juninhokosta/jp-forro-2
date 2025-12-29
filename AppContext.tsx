@@ -1,162 +1,162 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { User, Transaction, ServiceOrder, Quote, AppContextType, OSStatus, CatalogItem, Customer } from './types';
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+// CONFIGURAÇÃO SUPABASE (Substitua pelos seus dados do plano gratuito em supabase.com)
+const SUPABASE_URL = 'https://SUA_URL_AQUI.supabase.co';
+const SUPABASE_ANON_KEY = 'SUA_KEY_AQUI';
 
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const AppContext = createContext<AppContextType | undefined>(undefined);
 const DB_PREFIX = 'jp_db_';
 
-const db = {
-  save: (key: string, data: any) => {
-    localStorage.setItem(`${DB_PREFIX}${key}`, JSON.stringify(data));
-  },
-  load: (key: string, defaultValue: any) => {
-    const saved = localStorage.getItem(`${DB_PREFIX}${key}`);
-    return saved ? JSON.parse(saved) : defaultValue;
-  },
-  exportAll: () => {
-    const data: Record<string, any> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(DB_PREFIX)) {
-        data[key] = JSON.parse(localStorage.getItem(key) || 'null');
-      }
-    }
-    return btoa(JSON.stringify(data));
-  },
-  // NOVA FUNÇÃO: Fusão Inteligente de Dados
-  mergeAll: (encodedData: string) => {
-    try {
-      const remoteData = JSON.parse(atob(encodedData));
-      
-      const mergeArrays = (localKey: string, remoteKey: string) => {
-        const local = JSON.parse(localStorage.getItem(localKey) || '[]');
-        const remote = remoteData[remoteKey] ? (typeof remoteData[remoteKey] === 'string' ? JSON.parse(remoteData[remoteKey]) : remoteData[remoteKey]) : [];
-        
-        // Unir por ID, mantendo sempre o mais recente se houver duplicata
-        const map = new Map();
-        local.forEach((item: any) => map.set(item.id, item));
-        remote.forEach((item: any) => map.set(item.id, item));
-        
-        return Array.from(map.values());
-      };
-
-      const keys = [
-        { local: `${DB_PREFIX}customers`, remote: `${DB_PREFIX}customers` },
-        { local: `${DB_PREFIX}transactions`, remote: `${DB_PREFIX}transactions` },
-        { local: `${DB_PREFIX}os`, remote: `${DB_PREFIX}os` },
-        { local: `${DB_PREFIX}quotes`, remote: `${DB_PREFIX}quotes` },
-        { local: `${DB_PREFIX}catalog`, remote: `${DB_PREFIX}catalog` },
-      ];
-
-      keys.forEach(key => {
-        const merged = mergeArrays(key.local, key.remote);
-        localStorage.setItem(key.local, JSON.stringify(merged));
-      });
-
-      window.location.reload();
-    } catch (e) {
-      console.error(e);
-      throw new Error("Falha na unificação: Código inválido ou corrompido.");
-    }
-  }
-};
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<User[]>(() => {
-    const loaded = db.load('users', []);
-    if (loaded.length === 0) {
-      return [
-        { id: 'socio-1', name: 'Ivo junior', email: 'ivo@jpforro.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivo', password: '123456' },
-        { id: 'socio-2', name: 'Pedro Augusto', email: 'pedro@jpforro.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro', password: '123456' }
-      ];
-    }
-    return loaded;
-  });
-
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('jp_user_session');
     return saved ? JSON.parse(saved) : null;
   });
-  
-  const [customers, setCustomers] = useState<Customer[]>(() => db.load('customers', []));
-  const [transactions, setTransactions] = useState<Transaction[]>(() => db.load('transactions', []));
-  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>(() => db.load('os', []));
-  const [quotes, setQuotes] = useState<Quote[]>(() => db.load('quotes', []));
-  const [catalog, setCatalog] = useState<CatalogItem[]>(() => db.load('catalog', [
-    { id: '1', name: 'Mão de Obra Forro PVC', price: 25, type: 'SERVICE' },
-    { id: '2', name: 'Mão de Obra Drywall', price: 35, type: 'SERVICE' },
-    { id: '3', name: 'Perfil Canaleta', price: 15.50, type: 'PRODUCT' },
-    { id: '4', name: 'Placa de Gesso', price: 45, type: 'PRODUCT' }
-  ]));
 
-  useEffect(() => { db.save('users', users); }, [users]);
-  useEffect(() => { 
-    if (currentUser) localStorage.setItem('jp_user_session', JSON.stringify(currentUser));
-    else localStorage.removeItem('jp_user_session');
-  }, [currentUser]);
-  useEffect(() => { db.save('customers', customers); }, [customers]);
-  useEffect(() => { db.save('transactions', transactions); }, [transactions]);
-  useEffect(() => { db.save('os', serviceOrders); }, [serviceOrders]);
-  useEffect(() => { db.save('quotes', quotes); }, [quotes]);
-  useEffect(() => { db.save('catalog', catalog); }, [catalog]);
+  const [users] = useState<User[]>([
+    { id: 'socio-1', name: 'Ivo junior', email: 'ivo@jpforro.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivo', password: '123456' },
+    { id: 'socio-2', name: 'Pedro Augusto', email: 'pedro@jpforro.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro', password: '123456' }
+  ]);
+
+  const [customers, setCustomers] = useState<Customer[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}customers`) || '[]'));
+  const [transactions, setTransactions] = useState<Transaction[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}transactions`) || '[]'));
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}os`) || '[]'));
+  const [quotes, setQuotes] = useState<Quote[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}quotes`) || '[]'));
+  const [catalog, setCatalog] = useState<CatalogItem[]>(() => JSON.parse(localStorage.getItem(`${DB_PREFIX}catalog`) || '[]'));
+
+  // --- SINCRONIZAÇÃO AUTOMÁTICA COM A NUVEM ---
+  
+  // Efeito para carregar dados iniciais da nuvem e configurar tempo real
+  useEffect(() => {
+    const fetchCloudData = async () => {
+      setIsCloudSyncing(true);
+      try {
+        const { data: remoteOS } = await supabase.from('service_orders').select('*');
+        const { data: remoteTrans } = await supabase.from('transactions').select('*');
+        const { data: remoteCust } = await supabase.from('customers').select('*');
+        
+        if (remoteOS) setServiceOrders(remoteOS);
+        if (remoteTrans) setTransactions(remoteTrans);
+        if (remoteCust) setCustomers(remoteCust);
+      } catch (e) {
+        console.warn('Sync inicial falhou (Verifique suas credenciais Supabase)', e);
+      } finally {
+        setIsCloudSyncing(false);
+      }
+    };
+
+    fetchCloudData();
+
+    // Inscrição em tempo real para mudanças em outros aparelhos
+    const channel = supabase.channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+        fetchCloudData(); // Recarrega se houver mudanças remotas
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Efeito para backup local sempre que o estado mudar
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}customers`, JSON.stringify(customers)); }, [customers]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}transactions`, JSON.stringify(transactions)); }, [transactions]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}os`, JSON.stringify(serviceOrders)); }, [serviceOrders]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}quotes`, JSON.stringify(quotes)); }, [quotes]);
+  useEffect(() => { localStorage.setItem(`${DB_PREFIX}catalog`, JSON.stringify(catalog)); }, [catalog]);
 
   const login = (emailInput: string, passwordInput: string) => {
-    const email = emailInput.toLowerCase();
-    let user = users.find(u => u.email.toLowerCase() === email);
+    const user = users.find(u => u.email.toLowerCase() === emailInput.toLowerCase());
     if (!user) throw new Error("Usuário não cadastrado.");
-    if (user.password === passwordInput) setCurrentUser(user);
-    else throw new Error("Senha incorreta.");
+    if (user.password === passwordInput) {
+      setCurrentUser(user);
+      localStorage.setItem('jp_user_session', JSON.stringify(user));
+    } else throw new Error("Senha incorreta.");
   };
 
-  const logout = () => setCurrentUser(null);
-  const changePassword = (newPassword: string) => {
-    if (!currentUser) return;
-    const updatedUsers = users.map(u => u.id === currentUser.id ? { ...u, password: newPassword } : u);
-    setUsers(updatedUsers);
-    setCurrentUser({ ...currentUser, password: newPassword });
-    alert("Senha alterada!");
+  const logout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('jp_user_session');
+  };
+
+  const saveToCloud = async (table: string, payload: any) => {
+    try {
+      await supabase.from(table).upsert(payload);
+    } catch (e) {
+      console.error('Falha ao salvar na nuvem:', e);
+    }
   };
 
   const addCustomer = (c: Omit<Customer, 'id' | 'createdAt'>): string => {
     const id = `CUST-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
-    setCustomers(prev => [...prev, { ...c, id, createdAt: new Date().toISOString() }]);
+    const newCust = { ...c, id, createdAt: new Date().toISOString() };
+    setCustomers(prev => [...prev, newCust]);
+    saveToCloud('customers', newCust);
     return id;
   };
 
   const addTransaction = (t: Omit<Transaction, 'id' | 'userId' | 'userName'>) => {
     if (!currentUser) return;
-    setTransactions(prev => [{ ...t, id: `TR-${Math.random().toString(36).substr(2, 7).toUpperCase()}`, userId: currentUser.id, userName: currentUser.name }, ...prev]);
+    const newTrans = { ...t, id: `TR-${Math.random().toString(36).substr(2, 7).toUpperCase()}`, userId: currentUser.id, userName: currentUser.name };
+    setTransactions(prev => [newTrans, ...prev]);
+    saveToCloud('transactions', newTrans);
   };
 
   const updateTransaction = (id: string, t: Partial<Transaction>) => {
-    setTransactions(prev => prev.map(item => item.id === id ? { ...item, ...t } : item));
+    setTransactions(prev => {
+      const updated = prev.map(item => item.id === id ? { ...item, ...t } : item);
+      const itemToSave = updated.find(i => i.id === id);
+      if (itemToSave) saveToCloud('transactions', itemToSave);
+      return updated;
+    });
   };
 
-  const deleteTransaction = (id: string) => setTransactions(prev => prev.filter(item => item.id !== id));
+  const deleteTransaction = async (id: string) => {
+    setTransactions(prev => prev.filter(item => item.id !== id));
+    await supabase.from('transactions').delete().eq('id', id);
+  };
 
   const addOS = (os: Omit<ServiceOrder, 'id' | 'progress' | 'createdAt'>) => {
-    setServiceOrders(prev => [{ ...os, id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, progress: 0, createdAt: new Date().toISOString() }, ...prev]);
+    const newOS = { ...os, id: `OS-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, progress: 0, createdAt: new Date().toISOString() };
+    setServiceOrders(prev => [newOS, ...prev]);
+    saveToCloud('service_orders', newOS);
   };
 
   const updateOS = (id: string, updates: Partial<ServiceOrder>) => {
-    setServiceOrders(prev => prev.map(os => os.id === id ? { ...os, ...updates } : os));
+    setServiceOrders(prev => {
+      const updated = prev.map(os => os.id === id ? { ...os, ...updates } : os);
+      const osToSave = updated.find(i => i.id === id);
+      if (osToSave) saveToCloud('service_orders', osToSave);
+      return updated;
+    });
   };
 
-  const deleteOS = (id: string) => setServiceOrders(prev => prev.filter(os => os.id !== id));
+  const deleteOS = async (id: string) => {
+    setServiceOrders(prev => prev.filter(os => os.id !== id));
+    await supabase.from('service_orders').delete().eq('id', id);
+  };
 
   const updateOSStatus = (id: string, status: OSStatus) => {
-    setServiceOrders(prev => prev.map(os => {
-      if (os.id === id) {
-        let progress = 0;
-        if (status === OSStatus.QUOTED) progress = 10;
-        else if (status === OSStatus.APPROVED) progress = 30;
-        else if (status === OSStatus.IN_PROGRESS) progress = 60;
-        else if (status === OSStatus.FINISHED || status === OSStatus.PAID) progress = 100;
-        return { ...os, status, progress };
-      }
-      return os;
-    }));
+    setServiceOrders(prev => {
+      const updated = prev.map(os => {
+        if (os.id === id) {
+          let progress = 0;
+          if (status === OSStatus.QUOTED) progress = 10;
+          else if (status === OSStatus.APPROVED) progress = 30;
+          else if (status === OSStatus.IN_PROGRESS) progress = 60;
+          else if (status === OSStatus.FINISHED || status === OSStatus.PAID) progress = 100;
+          const updatedOS = { ...os, status, progress };
+          saveToCloud('service_orders', updatedOS);
+          return updatedOS;
+        }
+        return os;
+      });
+      return updated;
+    });
   };
 
   const createOSFromQuote = (quote: Quote) => {
@@ -176,40 +176,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalValue: quote.total
     };
     setServiceOrders(prev => [newOS, ...prev]);
+    saveToCloud('service_orders', newOS);
     updateQuoteStatus(quote.id, 'APPROVED');
   };
 
   const addQuote = (q: Omit<Quote, 'id' | 'createdAt' | 'status'>) => {
-    setQuotes(prev => [{ ...q, id: `ORC-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'PENDING' }, ...prev]);
+    const newQuote = { ...q, id: `ORC-${Math.random().toString(36).substr(2, 5).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'PENDING' as const };
+    setQuotes(prev => [newQuote, ...prev]);
+    saveToCloud('quotes', newQuote);
   };
 
-  const deleteQuote = (id: string) => setQuotes(prev => prev.filter(q => q.id !== id));
+  const deleteQuote = async (id: string) => {
+    setQuotes(prev => prev.filter(q => q.id !== id));
+    await supabase.from('quotes').delete().eq('id', id);
+  };
 
   const updateQuoteStatus = (id: string, status: Quote['status']) => {
-    setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+    setQuotes(prev => {
+      const updated = prev.map(q => {
+        if (q.id === id) {
+          const updatedQuote = { ...q, status };
+          saveToCloud('quotes', updatedQuote);
+          return updatedQuote;
+        }
+        return q;
+      });
+      return updated;
+    });
   };
 
   const addCatalogItem = (item: Omit<CatalogItem, 'id'>) => {
-    setCatalog(prev => [...prev, { ...item, id: `CAT-${Math.random().toString(36).substr(2, 5).toUpperCase()}` }]);
+    const newItem = { ...item, id: `CAT-${Math.random().toString(36).substr(2, 5).toUpperCase()}` };
+    setCatalog(prev => [...prev, newItem]);
+    saveToCloud('catalog', newItem);
   };
 
   const updateCatalogItem = (id: string, item: Partial<CatalogItem>) => {
-    setCatalog(prev => prev.map(i => i.id === id ? { ...i, ...item } : i));
+    setCatalog(prev => {
+      const updated = prev.map(i => i.id === id ? { ...i, ...item } : i);
+      const itemToSave = updated.find(i => i.id === id);
+      if (itemToSave) saveToCloud('catalog', itemToSave);
+      return updated;
+    });
   };
 
-  const removeCatalogItem = (id: string) => setCatalog(prev => prev.filter(i => i.id !== id));
-
-  const exportData = () => db.exportAll();
-  const importData = (code: string) => db.mergeAll(code); // Alterado para merge inteligente
+  const removeCatalogItem = async (id: string) => {
+    setCatalog(prev => prev.filter(i => i.id !== id));
+    await supabase.from('catalog').delete().eq('id', id);
+  };
 
   return (
     <AppContext.Provider value={{ 
-      currentUser, users, login, logout, changePassword, customers, addCustomer,
+      currentUser, users, login, logout, isCloudSyncing,
+      customers, addCustomer,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       serviceOrders, addOS, updateOS, deleteOS, updateOSStatus, createOSFromQuote,
       quotes, addQuote, deleteQuote, updateQuoteStatus,
-      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem,
-      exportData, importData
+      catalog, addCatalogItem, updateCatalogItem, removeCatalogItem
     } as any}>
       {children}
     </AppContext.Provider>

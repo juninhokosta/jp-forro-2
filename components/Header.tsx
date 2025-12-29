@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
-import { User as UserIcon, Lock, X, RefreshCw, Database } from 'lucide-react';
+import { User as UserIcon, Lock, X, Cloud, CloudOff, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab }) => {
-  const { currentUser, changePassword, transactions, serviceOrders } = useApp();
+  const { currentUser, changePassword, isCloudSyncing } = useApp();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPass, setNewPass] = useState('');
 
@@ -19,7 +19,6 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
       case 'expenses': return 'Fluxo de Caixa';
       case 'quotes': return 'Orçamentos';
       case 'reports': return 'Relatórios';
-      case 'settings': return 'Configurações';
       default: return 'JP Forro';
     }
   };
@@ -40,18 +39,15 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
       <div className="min-w-0">
         <h2 className="text-lg md:text-xl font-black text-slate-800 tracking-tight truncate uppercase">{getTitle()}</h2>
         <div className="flex items-center gap-2 mt-0.5">
-           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Banco Local Unificado</p>
+           <span className={`w-1.5 h-1.5 rounded-full ${isCloudSyncing ? 'bg-blue-500 animate-spin-slow' : 'bg-emerald-500 animate-pulse'}`}></span>
+           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-1">
+             {isCloudSyncing ? <RefreshCw className="w-2.5 h-2.5" /> : <Cloud className="w-2.5 h-2.5" />}
+             {isCloudSyncing ? 'Sincronizando...' : 'Nuvem Simultânea Ativa'}
+           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 md:gap-5">
-        <div className="hidden md:flex flex-col items-end mr-2">
-            <div className="flex items-center gap-1 text-[9px] font-black text-blue-600 uppercase">
-                <Database className="w-3 h-3" /> {serviceOrders.length} Obras | {transactions.length} Lançamentos
-            </div>
-        </div>
-
         <button 
           onClick={() => setShowPasswordModal(true)}
           className="p-2.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-slate-100"
