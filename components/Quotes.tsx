@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
-import { Plus, Trash2, Search, Printer, MessageCircle, FileText, LayoutList, X, Minus, ChevronRight, Package, Calculator } from 'lucide-react';
+import { Plus, Trash2, Search, Printer, MessageCircle, FileText, LayoutList, X, Minus, ChevronRight, Package, Calculator, Briefcase } from 'lucide-react';
 import { ProductItem, Quote, CatalogItem } from '../types';
 
 const Quotes: React.FC = () => {
@@ -141,14 +141,14 @@ const Quotes: React.FC = () => {
           <button onClick={() => setView('LIST')} className="bg-white p-3 rounded-2xl border flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-sm">
             <ChevronRight className="w-4 h-4 rotate-180" /> Voltar
           </button>
-          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Gestão do Catálogo</h3>
+          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Catálogo Master</h3>
         </div>
         <div className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
-          <h4 className="font-black text-slate-400 mb-8 uppercase tracking-widest text-[10px]">Novo Item Geral</h4>
+          <h4 className="font-black text-slate-400 mb-8 uppercase tracking-widest text-[10px]">Cadastrar Novo Item</h4>
           <form onSubmit={handleAddMasterItem} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="space-y-2">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição</label>
-              <input type="text" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" placeholder="Ex: Forro PVC Liso" />
+              <input type="text" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" placeholder="Ex: Forro PVC Especial" />
             </div>
             <div className="space-y-2">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Preço Base (R$)</label>
@@ -186,6 +186,7 @@ const Quotes: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-300 pb-32">
       {selectedQuoteForExport && (
         <div className="fixed inset-0 bg-white z-[999] p-10 overflow-auto print:block hidden">
+          {/* Layout Impressão PDF */}
           <div className="border-b-4 border-blue-600 pb-6 mb-8 flex justify-between items-end">
             <div>
               <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">JP FORRO</h1>
@@ -215,7 +216,7 @@ const Quotes: React.FC = () => {
               ))}
             </tbody>
             <tfoot>
-              <tr><td colSpan={3} className="p-4 text-right font-black uppercase">Valor Total da Proposta</td><td className="p-4 text-right font-black text-3xl text-blue-600">{formatCurrency(selectedQuoteForExport.total)}</td></tr>
+              <tr><td colSpan={3} className="p-4 text-right font-black uppercase">Valor Total</td><td className="p-4 text-right font-black text-3xl text-blue-600">{formatCurrency(selectedQuoteForExport.total)}</td></tr>
             </tfoot>
           </table>
           {selectedQuoteForExport.observations && (
@@ -230,7 +231,7 @@ const Quotes: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
         <div>
           <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Propostas</h3>
-          <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">Orçamentos e Negociações</p>
+          <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">Orçamentos Ativos</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <button onClick={() => setView('CATALOG')} className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition-all">
@@ -247,8 +248,8 @@ const Quotes: React.FC = () => {
           <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95">
             <div className="p-6 md:p-10 bg-slate-900 text-white flex justify-between items-center shrink-0">
                 <div>
-                  <h4 className="text-2xl font-black tracking-tight uppercase">Montar Proposta Comercial</h4>
-                  <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mt-1">Personalize o orçamento para o cliente</p>
+                  <h4 className="text-2xl font-black tracking-tight uppercase">Montar Proposta</h4>
+                  <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mt-1">Preencha os detalhes da obra</p>
                 </div>
                 <button onClick={() => setShowAddQuote(false)} className="p-3 bg-white/10 rounded-full hover:bg-white/20 transition-all"><X className="w-6 h-6" /></button>
             </div>
@@ -257,10 +258,10 @@ const Quotes: React.FC = () => {
               <div className="lg:col-span-4 space-y-6">
                  <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">IDENTIFICAÇÃO</h5>
                  <div className="space-y-4">
-                   <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="Nome Completo" />
-                   <input type="text" value={customerContact} onChange={e => setCustomerContact(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="WhatsApp / Contato" />
-                   <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="Local da Obra" />
-                   <textarea value={observations} onChange={e => setObservations(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[100px] font-medium text-sm" placeholder="Notas Adicionais (Prazos, Condições...)"></textarea>
+                   <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm" placeholder="Nome Completo" />
+                   <input type="text" value={customerContact} onChange={e => setCustomerContact(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm" placeholder="WhatsApp / Contato" />
+                   <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm" placeholder="Local da Obra" />
+                   <textarea value={observations} onChange={e => setObservations(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[100px] font-medium text-sm" placeholder="Notas Adicionais..."></textarea>
                  </div>
               </div>
 
@@ -318,12 +319,11 @@ const Quotes: React.FC = () => {
                         <span className="text-4xl font-black text-blue-600 tracking-tighter">{formatCurrency(total)}</span>
                      </div>
                      <button onClick={handleSubmit} className="px-12 py-5 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                        Salvar Proposta
+                        Salvar Orçamento
                      </button>
                   </div>
                 </div>
 
-                {/* Seletor do Catálogo com Preços */}
                 <div className="bg-slate-900 p-6 md:p-8 rounded-[2.5rem] shadow-2xl">
                     <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
                        <h6 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] whitespace-nowrap">Itens do Catálogo</h6>
@@ -380,18 +380,21 @@ const Quotes: React.FC = () => {
                   <Printer className="w-4 h-4" /> IMPRIMIR
                 </button>
                 <button onClick={() => handleWhatsApp(q)} className="flex items-center justify-center gap-2 py-4 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors">
-                  <MessageCircle className="w-4 h-4" /> ENVIAR
+                  <MessageCircle className="w-4 h-4" /> WHATSAPP
                 </button>
               </div>
 
-              {q.status === 'PENDING' ? (
+              {/* BOTAO RESTAURADO: Fechar Obra / Gerar OS */}
+              {q.status === 'PENDING' && (
                 <button 
                   onClick={() => { if(confirm('Gerar Ordem de Serviço agora?')) createOSFromQuote(q); }} 
-                  className="w-full py-5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-blue-500/10 active:scale-[0.98] transition-all"
+                  className="w-full py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl active:scale-[0.98] transition-all"
                 >
-                  <FileText className="w-4 h-4" /> Fechar Obra
+                  <Briefcase className="w-4 h-4 text-blue-400" /> Fechar Obra
                 </button>
-              ) : (
+              )}
+              
+              {q.status !== 'PENDING' && (
                   <button onClick={() => deleteQuote(q.id)} className="w-full py-4 text-slate-300 hover:text-rose-500 font-black text-[9px] uppercase tracking-[0.2em] transition-all">Excluir Orçamento</button>
               )}
             </div>
