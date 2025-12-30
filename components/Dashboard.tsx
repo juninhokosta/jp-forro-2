@@ -50,49 +50,66 @@ const Dashboard: React.FC = () => {
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
+  const nextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(prev => prev + 1);
+    } else {
+      setSelectedMonth(prev => prev + 1);
+    }
+  };
+
+  const prevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(prev => prev - 1);
+    } else {
+      setSelectedMonth(prev => prev - 1);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-20">
-      {/* Novo Cabeçalho Moderno com Seletor */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+      {/* Cabeçalho Ultra Moderno */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 rounded-[3rem] p-8 md:p-12 shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] -mr-48 -mt-48"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-[100px] -ml-48 -mb-48"></div>
         
-        <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-10">
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 bg-white/5 border border-white/10 w-fit p-2 rounded-2xl backdrop-blur-md">
-              <button 
-                onClick={() => setSelectedMonth(prev => prev === 0 ? 11 : prev - 1)}
-                className="p-2 hover:bg-white/10 rounded-xl transition-all text-white/50 hover:text-white"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <div className="flex items-center gap-2 px-4">
-                <CalendarIcon className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-black text-white uppercase tracking-widest">{months[selectedMonth]} {selectedYear}</span>
-              </div>
-              <button 
-                onClick={() => setSelectedMonth(prev => prev === 11 ? 0 : prev + 1)}
-                className="p-2 hover:bg-white/10 rounded-xl transition-all text-white/50 hover:text-white"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+        <div className="relative z-10 space-y-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white leading-none">JP FORRO</h2>
+              <p className="text-blue-400 text-xs font-black uppercase tracking-[0.3em]">Gestão de Sociedade Ivo & Pedro</p>
             </div>
-            
-            <div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-none">Resultado <br/> da Sociedade</h2>
-              <p className="text-blue-400 text-xs font-black uppercase tracking-[0.3em] mt-4">Partilha Ivo & Pedro • 50/50</p>
+
+            {/* Seletor de Mês */}
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-2 rounded-2xl backdrop-blur-xl self-start">
+              <button onClick={prevMonth} className="p-2 hover:bg-white/10 rounded-xl transition-all text-white"><ChevronLeft className="w-5 h-5" /></button>
+              <div className="px-4 text-center min-w-[140px]">
+                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">{selectedYear}</p>
+                <p className="text-sm font-black text-white uppercase tracking-tight leading-none">{months[selectedMonth]}</p>
+              </div>
+              <button onClick={nextMonth} className="p-2 hover:bg-white/10 rounded-xl transition-all text-white"><ChevronRight className="w-5 h-5" /></button>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-end gap-6">
-            <div className="w-full md:w-64 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl">
-              <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-4">Lucro Líquido</p>
-              <h3 className="text-4xl font-black text-emerald-400 tracking-tighter mb-6">{formatCurrency(netProfit)}</h3>
-              <div className="pt-6 border-t border-white/10 flex items-center justify-between">
-                <div className="p-2 bg-blue-500/20 rounded-xl"><Scale className="w-5 h-5 text-blue-400" /></div>
-                <div className="text-right">
-                   <p className="text-[8px] font-black text-white/40 uppercase">Cada Sócio</p>
-                   <p className="text-lg font-black text-white">{formatCurrency(netProfit / 2)}</p>
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] ml-1">Lucro Líquido do Período</p>
+              <div className="flex items-baseline gap-4">
+                <h3 className="text-5xl md:text-7xl font-black text-white tracking-tighter">{formatCurrency(netProfit)}</h3>
+                {netProfit > 0 && <TrendingUp className="text-emerald-400 w-8 h-8" />}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
+                <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest mb-2">Parte do Ivo</p>
+                <p className="text-2xl font-black text-white tracking-tight">{formatCurrency(netProfit / 2)}</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
+                <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest mb-2">Parte do Pedro</p>
+                <p className="text-2xl font-black text-white tracking-tight">{formatCurrency(netProfit / 2)}</p>
               </div>
             </div>
           </div>
@@ -112,7 +129,7 @@ const Dashboard: React.FC = () => {
               <kpi.icon className="w-6 h-6" />
             </div>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{kpi.label}</p>
-            <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-1 truncate tracking-tight">
+            <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-1 truncate">
               {kpi.isCurrency === false ? kpi.val : formatCurrency(kpi.val as number)}
             </h3>
           </div>
@@ -120,11 +137,11 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Gráfico */}
         <div className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-10">
             <h3 className="text-lg font-black text-slate-800 flex items-center gap-2 uppercase tracking-tighter">
-              <Users className="w-5 h-5 text-blue-500" />
-              Performance dos Sócios
+              <Users className="w-5 h-5 text-blue-500" /> Performance dos Sócios
             </h3>
           </div>
           <div className="h-72 w-full">
@@ -145,14 +162,15 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Extrato Recente */}
         <div className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-10">
-            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Fluxo de Caixa Mensal</h3>
+            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Extrato no Período</h3>
           </div>
           <div className="space-y-4">
             {filteredTransactions.length === 0 && (
                 <div className="py-20 text-center opacity-30">
-                  <p className="text-xs font-black uppercase tracking-widest">Sem atividades no período selecionado</p>
+                  <p className="text-xs font-black uppercase tracking-widest">Sem atividades neste período</p>
                 </div>
             )}
             {filteredTransactions.slice(0, 6).map(t => (

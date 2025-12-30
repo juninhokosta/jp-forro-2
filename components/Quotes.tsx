@@ -1,20 +1,17 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
-import { Plus, Trash2, XCircle, Search, UserPlus, Printer, MessageCircle, FileText, LayoutList, X, Minus, ChevronRight, Package, Calculator } from 'lucide-react';
-import { ProductItem, Quote, Customer, CatalogItem } from '../types';
+import { Plus, Trash2, Search, Printer, MessageCircle, FileText, LayoutList, X, Minus, ChevronRight, Package, Calculator } from 'lucide-react';
+import { ProductItem, Quote, CatalogItem } from '../types';
 
 const Quotes: React.FC = () => {
   const { 
     quotes, 
     addQuote, 
     deleteQuote,
-    updateQuoteStatus, 
     catalog, 
     createOSFromQuote, 
-    customers, 
     addCustomer, 
-    updateCatalogItem,
     addCatalogItem,
     removeCatalogItem
   } = useApp();
@@ -38,7 +35,6 @@ const Quotes: React.FC = () => {
   );
 
   const handleAddItemFromCatalog = (catalogItem: CatalogItem) => {
-    // Se o item já existir, incrementa a quantidade
     const existingIndex = items.findIndex(i => i.name === catalogItem.name);
     if (existingIndex > -1) {
       const newItems = [...items];
@@ -145,14 +141,14 @@ const Quotes: React.FC = () => {
           <button onClick={() => setView('LIST')} className="bg-white p-3 rounded-2xl border flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-sm">
             <ChevronRight className="w-4 h-4 rotate-180" /> Voltar
           </button>
-          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Catálogo Master</h3>
+          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Gestão do Catálogo</h3>
         </div>
         <div className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
-          <h4 className="font-black text-slate-400 mb-8 uppercase tracking-widest text-[10px]">Cadastrar Novo Item no Catálogo</h4>
+          <h4 className="font-black text-slate-400 mb-8 uppercase tracking-widest text-[10px]">Novo Item Geral</h4>
           <form onSubmit={handleAddMasterItem} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="space-y-2">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição</label>
-              <input type="text" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" placeholder="Ex: Forro PVC Especial" />
+              <input type="text" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold" placeholder="Ex: Forro PVC Liso" />
             </div>
             <div className="space-y-2">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Preço Base (R$)</label>
@@ -165,7 +161,7 @@ const Quotes: React.FC = () => {
                 <option value="PRODUCT">Produto</option>
               </select>
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white font-black py-4.5 rounded-2xl shadow-xl shadow-blue-500/10 active:scale-[0.98] transition-all uppercase text-[10px] tracking-widest">Salvar no Catálogo</button>
+            <button type="submit" className="w-full bg-slate-900 text-white font-black py-4.5 rounded-2xl shadow-xl active:scale-[0.98] transition-all uppercase text-[10px] tracking-widest">Salvar Item</button>
           </form>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -200,38 +196,48 @@ const Quotes: React.FC = () => {
               <p className="text-xs font-bold text-slate-400">Data: {new Date(selectedQuoteForExport.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
-          <p className="font-black text-slate-800">{selectedQuoteForExport.customerName}</p>
-          <table className="w-full mt-6 mb-10">
+          <div className="space-y-4">
+             <p className="font-black text-slate-800 text-lg">{selectedQuoteForExport.customerName}</p>
+             <p className="text-xs text-slate-500 font-bold uppercase">{selectedQuoteForExport.customerContact}</p>
+          </div>
+          <table className="w-full mt-8 mb-10">
             <thead className="bg-slate-100 text-[10px] font-black uppercase text-slate-500">
-              <tr><th className="p-3 text-left">Item</th><th className="p-3 text-center">Qtd</th><th className="p-3 text-right">Subtotal</th></tr>
+              <tr><th className="p-3 text-left">Item</th><th className="p-3 text-center">Qtd</th><th className="p-3 text-right">Unit.</th><th className="p-3 text-right">Subtotal</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {selectedQuoteForExport.items.map(i => (
                 <tr key={i.id} className="text-sm">
                   <td className="p-3 font-bold text-slate-800">{i.name}</td>
                   <td className="p-3 text-center font-bold">{i.quantity}</td>
+                  <td className="p-3 text-right font-bold">{formatCurrency(i.price)}</td>
                   <td className="p-3 text-right font-black">{formatCurrency(i.price * i.quantity)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr><td colSpan={2} className="p-4 text-right font-black">TOTAL</td><td className="p-4 text-right font-black text-3xl text-blue-600">{formatCurrency(selectedQuoteForExport.total)}</td></tr>
+              <tr><td colSpan={3} className="p-4 text-right font-black uppercase">Valor Total da Proposta</td><td className="p-4 text-right font-black text-3xl text-blue-600">{formatCurrency(selectedQuoteForExport.total)}</td></tr>
             </tfoot>
           </table>
+          {selectedQuoteForExport.observations && (
+            <div className="mt-6 p-6 bg-slate-50 border rounded-2xl">
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Observações Técnicas</p>
+               <p className="text-sm text-slate-600">{selectedQuoteForExport.observations}</p>
+            </div>
+          )}
         </div>
       )}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
-        <div className="w-full">
-          <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Orçamentos</h3>
-          <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">Geração de Propostas</p>
+        <div>
+          <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Propostas</h3>
+          <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">Orçamentos e Negociações</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <button onClick={() => setView('CATALOG')} className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95">
+          <button onClick={() => setView('CATALOG')} className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition-all">
             <LayoutList className="w-4 h-4" /> Catálogo
           </button>
-          <button onClick={() => setShowAddQuote(true)} className="flex-[2] flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
-            <Plus className="w-4 h-4" /> Criar Orçamento
+          <button onClick={() => setShowAddQuote(true)} className="flex-[2] flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+            <Plus className="w-4 h-4" /> Novo Orçamento
           </button>
         </div>
       </div>
@@ -241,86 +247,89 @@ const Quotes: React.FC = () => {
           <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95">
             <div className="p-6 md:p-10 bg-slate-900 text-white flex justify-between items-center shrink-0">
                 <div>
-                  <h4 className="text-2xl font-black tracking-tight uppercase">Montar Orçamento Profissional</h4>
-                  <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mt-1">Preencha os dados e selecione os itens</p>
+                  <h4 className="text-2xl font-black tracking-tight uppercase">Montar Proposta Comercial</h4>
+                  <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mt-1">Personalize o orçamento para o cliente</p>
                 </div>
                 <button onClick={() => setShowAddQuote(false)} className="p-3 bg-white/10 rounded-full hover:bg-white/20 transition-all"><X className="w-6 h-6" /></button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
               <div className="lg:col-span-4 space-y-6">
-                 <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">DADOS DO CLIENTE</h5>
+                 <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">IDENTIFICAÇÃO</h5>
                  <div className="space-y-4">
-                   <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="Nome do Cliente" />
-                   <input type="text" value={customerContact} onChange={e => setCustomerContact(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="WhatsApp" />
-                   <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="Endereço" />
-                   <textarea value={observations} onChange={e => setObservations(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[100px] font-medium text-sm" placeholder="Observações (Prazos, Garantia, etc)"></textarea>
+                   <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="Nome Completo" />
+                   <input type="text" value={customerContact} onChange={e => setCustomerContact(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="WhatsApp / Contato" />
+                   <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" placeholder="Local da Obra" />
+                   <textarea value={observations} onChange={e => setObservations(e.target.value)} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[100px] font-medium text-sm" placeholder="Notas Adicionais (Prazos, Condições...)"></textarea>
                  </div>
               </div>
 
               <div className="lg:col-span-8 flex flex-col h-full space-y-6">
                 <div className="flex-1 flex flex-col min-h-0 bg-slate-50 rounded-[2.5rem] p-6 border border-slate-100">
                   <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-4 flex items-center justify-between">
-                    ITENS DO ORÇAMENTO
-                    <span className="text-blue-600">{items.length} itens selecionados</span>
+                    ITENS SELECIONADOS
+                    <span className="text-blue-600 font-black">{items.length} ITENS</span>
                   </h5>
                   
                   <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-6">
                     {items.length === 0 && (
                       <div className="h-full flex flex-col items-center justify-center opacity-20 py-20">
                          <Calculator className="w-16 h-16 mb-4" />
-                         <p className="font-black uppercase tracking-widest text-xs">Selecione itens do catálogo abaixo</p>
+                         <p className="font-black uppercase tracking-widest text-xs">Adicione itens do catálogo abaixo</p>
                       </div>
                     )}
                     {items.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-5 bg-white rounded-3xl border border-slate-100 shadow-sm animate-in slide-in-from-right-4">
+                      <div key={item.id} className="flex items-center justify-between p-5 bg-white rounded-3xl border border-slate-100 shadow-sm animate-in slide-in-from-right-4 transition-all">
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tighter mb-1">{item.name}</p>
                           <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-bold text-slate-400">Unitário:</span>
-                            <input 
-                              type="number" 
-                              value={item.price} 
-                              onChange={e => updateItemPrice(item.id, e.target.value)}
-                              className="w-20 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 text-xs font-black text-blue-600 outline-none focus:ring-1 focus:ring-blue-500" 
-                            />
+                            <span className="text-[9px] font-bold text-slate-400 uppercase">Preço Unitário:</span>
+                            <div className="flex items-center gap-1">
+                               <span className="text-[10px] font-black text-blue-600">R$</span>
+                               <input 
+                                  type="number" 
+                                  value={item.price} 
+                                  onChange={e => updateItemPrice(item.id, e.target.value)}
+                                  className="w-24 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1 text-xs font-black text-blue-600 outline-none" 
+                               />
+                            </div>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-6 ml-4">
-                          <div className="flex items-center bg-slate-50 rounded-2xl p-1 border">
+                          <div className="flex items-center bg-slate-100 rounded-2xl p-1 border">
                              <button onClick={() => updateItemQty(item.id, -1)} className="p-2 hover:bg-white rounded-xl transition-all text-slate-400"><Minus className="w-4 h-4" /></button>
                              <span className="w-8 text-center text-xs font-black">{item.quantity}</span>
                              <button onClick={() => updateItemQty(item.id, 1)} className="p-2 hover:bg-white rounded-xl transition-all text-blue-600"><Plus className="w-4 h-4" /></button>
                           </div>
-                          <div className="text-right min-w-[80px]">
-                            <p className="text-[10px] font-black text-slate-400 uppercase">Subtotal</p>
-                            <p className="text-sm font-black text-slate-800 tracking-tighter">{formatCurrency(item.price * item.quantity)}</p>
+                          <div className="text-right min-w-[100px]">
+                            <p className="text-[8px] font-black text-slate-400 uppercase">Subtotal</p>
+                            <p className="text-base font-black text-slate-900 tracking-tighter">{formatCurrency(item.price * item.quantity)}</p>
                           </div>
-                          <button onClick={() => handleRemoveItem(item.id)} className="p-3 text-rose-500 hover:bg-rose-50 rounded-2xl transition-all"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => handleRemoveItem(item.id)} className="p-3 text-rose-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="pt-6 border-t-2 border-slate-100 flex justify-between items-center shrink-0">
+                  <div className="pt-6 border-t-2 border-slate-200 flex justify-between items-center shrink-0">
                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Final Estimado</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total da Proposta</span>
                         <span className="text-4xl font-black text-blue-600 tracking-tighter">{formatCurrency(total)}</span>
                      </div>
-                     <button onClick={handleSubmit} className="px-12 py-5 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-500/20 active:scale-95 transition-all">
-                        Finalizar e Salvar
+                     <button onClick={handleSubmit} className="px-12 py-5 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                        Salvar Proposta
                      </button>
                   </div>
                 </div>
 
-                {/* Seletor de Catálogo Refinado */}
+                {/* Seletor do Catálogo com Preços */}
                 <div className="bg-slate-900 p-6 md:p-8 rounded-[2.5rem] shadow-2xl">
                     <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                       <h6 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] whitespace-nowrap">Adicionar do Catálogo</h6>
+                       <h6 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] whitespace-nowrap">Itens do Catálogo</h6>
                        <div className="relative w-full">
                           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                          <input type="text" placeholder="Pesquisar serviço ou produto..." value={searchItem} onChange={e => setSearchItem(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/10 rounded-2xl outline-none text-white text-xs font-bold focus:bg-white/20 transition-all" />
+                          <input type="text" placeholder="Pesquisar..." value={searchItem} onChange={e => setSearchItem(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/10 rounded-2xl outline-none text-white text-xs font-bold focus:bg-white/20 transition-all" />
                        </div>
                     </div>
                     
@@ -335,7 +344,7 @@ const Quotes: React.FC = () => {
                                    <p className="text-[10px] font-black text-white group-hover:text-white truncate uppercase tracking-tight">{cat.name}</p>
                                    <p className="text-[9px] font-black text-blue-400 group-hover:text-blue-100 mt-0.5">{formatCurrency(cat.price)}</p>
                                 </div>
-                                <Plus className="w-4 h-4 text-blue-500 group-hover:text-white ml-3" />
+                                <Plus className="w-4 h-4 text-blue-500 group-hover:text-white ml-2" />
                             </button>
                         ))}
                     </div>
@@ -362,25 +371,25 @@ const Quotes: React.FC = () => {
               </div>
               
               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Proposta</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Proposto</span>
                 <span className="text-2xl font-black text-blue-600 tracking-tighter">{formatCurrency(q.total)}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => handlePrint(q)} className="flex items-center justify-center gap-2 py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors">
-                  <Printer className="w-4 h-4" /> PDF
+                  <Printer className="w-4 h-4" /> IMPRIMIR
                 </button>
                 <button onClick={() => handleWhatsApp(q)} className="flex items-center justify-center gap-2 py-4 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors">
-                  <MessageCircle className="w-4 h-4" /> WHATSAPP
+                  <MessageCircle className="w-4 h-4" /> ENVIAR
                 </button>
               </div>
 
               {q.status === 'PENDING' ? (
                 <button 
-                  onClick={() => { if(confirm('Confirmar fechamento e gerar OS desta proposta?')) createOSFromQuote(q); }} 
+                  onClick={() => { if(confirm('Gerar Ordem de Serviço agora?')) createOSFromQuote(q); }} 
                   className="w-full py-5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-blue-500/10 active:scale-[0.98] transition-all"
                 >
-                  <FileText className="w-4 h-4" /> Gerar Ordem de Serviço
+                  <FileText className="w-4 h-4" /> Fechar Obra
                 </button>
               ) : (
                   <button onClick={() => deleteQuote(q.id)} className="w-full py-4 text-slate-300 hover:text-rose-500 font-black text-[9px] uppercase tracking-[0.2em] transition-all">Excluir Orçamento</button>
@@ -391,7 +400,7 @@ const Quotes: React.FC = () => {
         {quotes.length === 0 && (
           <div className="col-span-full py-24 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center">
             <Package className="w-16 h-16 text-slate-100 mb-6" />
-            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Sem propostas ativas</p>
+            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Sem propostas geradas</p>
           </div>
         )}
       </div>
