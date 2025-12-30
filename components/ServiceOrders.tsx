@@ -4,7 +4,7 @@ import { useApp } from '../AppContext';
 import { OSStatus, ServiceOrder } from '../types';
 import { 
   CheckCircle2, Clock, X, ClipboardList, MapPin, Phone, Fuel, ShoppingCart, 
-  ChevronRight, Edit3, PlusCircle, Scale, Archive, CheckCheck, CreditCard, Receipt, Users
+  ChevronRight, Edit3, PlusCircle, Scale, Archive, CheckCheck, CreditCard, Receipt, Users, Utensils, Coffee
 } from 'lucide-react';
 
 const ServiceOrders: React.FC = () => {
@@ -13,13 +13,11 @@ const ServiceOrders: React.FC = () => {
     updateOSStatus, 
     addTransaction, 
     transactions,
-    archiveOS,
     deleteOS
   } = useApp();
 
   const [view, setView] = useState<'LIST' | 'DETAIL'>('LIST');
   const [selectedOSId, setSelectedOSId] = useState<string | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
 
   const [quickInput, setQuickInput] = useState<{
     show: boolean;
@@ -28,13 +26,15 @@ const ServiceOrders: React.FC = () => {
     type: 'INCOME' | 'EXPENSE';
     value: string;
     notes: string;
+    isCustom: boolean;
   }>({
     show: false,
     category: '',
     osId: '',
     type: 'EXPENSE',
     value: '',
-    notes: ''
+    notes: '',
+    isCustom: false
   });
 
   const selectedOS = serviceOrders.find(os => os.id === selectedOSId);
@@ -67,8 +67,8 @@ const ServiceOrders: React.FC = () => {
     }
   };
 
-  const openQuickInput = (osId: string, category: string, type: 'INCOME' | 'EXPENSE' = 'EXPENSE') => {
-    setQuickInput({ show: true, category, osId, type, value: '', notes: '' });
+  const openQuickInput = (osId: string, category: string, isCustom = false) => {
+    setQuickInput({ show: true, category, osId, type: 'EXPENSE', value: '', notes: '', isCustom });
   };
 
   const handleQuickInputSubmit = (e: React.FormEvent) => {
@@ -78,7 +78,7 @@ const ServiceOrders: React.FC = () => {
       addTransaction({
         type: quickInput.type,
         amount: val,
-        description: `${quickInput.category} - OS ${quickInput.osId}`,
+        description: `${quickInput.isCustom ? quickInput.notes : quickInput.category} - OS ${quickInput.osId}`,
         category: quickInput.category,
         date: new Date().toISOString().split('T')[0],
         osId: quickInput.osId,
@@ -100,9 +100,23 @@ const ServiceOrders: React.FC = () => {
           <div className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
             <form onSubmit={handleQuickInputSubmit} className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl border border-slate-100">
               <div className="flex justify-between items-center mb-6">
-                <h4 className="text-xl font-black text-slate-800">{quickInput.category}</h4>
+                <h4 className="text-xl font-black text-slate-800">{quickInput.isCustom ? 'Lançamento Avulso' : quickInput.category}</h4>
                 <button type="button" onClick={() => setQuickInput({ ...quickInput, show: false })}><X className="w-6 h-6 text-slate-400" /></button>
               </div>
+
+              {quickInput.isCustom && (
+                <div className="mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Descrição do Item</p>
+                  <input 
+                    type="text" required
+                    value={quickInput.notes}
+                    onChange={e => setQuickInput({ ...quickInput, notes: e.target.value })}
+                    className="w-full px-6 py-4 bg-slate-50 border-2 rounded-2xl text-sm font-bold outline-none mb-2 focus:border-blue-500"
+                    placeholder="Ex: Aluguel de Escada"
+                  />
+                </div>
+              )}
+
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Valor do Lançamento</p>
               <input 
                 type="number" step="0.01" autoFocus required 
@@ -117,13 +131,10 @@ const ServiceOrders: React.FC = () => {
         )}
 
         <div className="flex justify-between items-center">
-          <button onClick={() => setView('LIST')} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-500 font-black uppercase text-[10px] tracking-widest flex items-center gap-1 shadow-sm active:scale-95">
-            <X className="w-4 h-4" /> Voltar
+          <button onClick={() => setView('LIST')} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-500 font-black uppercase text-[10px] tracking-widest flex items-center gap-1 shadow-sm active:scale-95 transition-all">
+            <ChevronRight className="w-4 h-4 rotate-180" /> Voltar
           </button>
           <div className="flex gap-2">
-            <button onClick={() => { archiveOS(selectedOS.id, !selectedOS.archived); setView('LIST'); }} className="px-4 py-3 bg-white border rounded-2xl text-[9px] font-black uppercase flex items-center gap-1 shadow-sm">
-              <Archive className="w-4 h-4" /> {selectedOS.archived ? "Restaurar" : "Arquivar"}
-            </button>
             <span className={`px-4 py-3 rounded-2xl text-[9px] font-black uppercase border shadow-sm ${selectedOS.status === OSStatus.PAID ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
               {selectedOS.status}
             </span>
@@ -135,16 +146,14 @@ const ServiceOrders: React.FC = () => {
             <div className="bg-white p-6 md:p-12 rounded-[2.5rem] border shadow-sm relative overflow-hidden">
               <div className="mb-10">
                 <h2 className="text-3xl md:text-5xl font-black tracking-tighter text-slate-900 leading-none">{selectedOS.customerName}</h2>
-                <div className="flex flex-col gap-2 mt-4">
-                  <p className="text-slate-500 text-[10px] md:text-xs font-bold uppercase flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-blue-500" /> {selectedOS.customerAddress}
-                  </p>
-                </div>
+                <p className="text-slate-500 text-[10px] md:text-xs font-bold uppercase flex items-center gap-2 mt-4">
+                  <MapPin className="w-4 h-4 text-blue-500" /> {selectedOS.customerAddress}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
                 <div className="p-6 bg-slate-900 text-white rounded-[2rem] shadow-xl">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">VALOR CONTRATO</p>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">CONTRATO</p>
                   <p className="text-2xl font-black tracking-tight">{formatCurrency(selectedOS.totalValue)}</p>
                 </div>
                 <div className="p-6 bg-emerald-600 text-white rounded-[2rem] shadow-xl">
@@ -159,33 +168,27 @@ const ServiceOrders: React.FC = () => {
 
               <div className="bg-slate-50 p-6 md:p-10 rounded-[2.5rem] border border-slate-200 mb-8">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
-                  <Receipt className="w-4 h-4 text-blue-500" /> LANÇAR CUSTOS RÁPIDOS NA OBRA
+                  <Receipt className="w-4 h-4 text-blue-500" /> LANÇAR CUSTOS RÁPIDOS
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <button onClick={() => openQuickInput(selectedOS.id, 'Combustível')} className="flex flex-col items-center p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all group">
-                    <div className="p-4 bg-amber-50 text-amber-500 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-colors mb-4">
-                      <Fuel className="w-8 h-8" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-slate-600">Gasolina</span>
-                  </button>
-                  <button onClick={() => openQuickInput(selectedOS.id, 'Material')} className="flex flex-col items-center p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all group">
-                    <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-colors mb-4">
-                      <ShoppingCart className="w-8 h-8" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-slate-600">Material</span>
-                  </button>
-                  <button onClick={() => openQuickInput(selectedOS.id, 'Mão de Obra')} className="flex flex-col items-center p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all group">
-                    <div className="p-4 bg-emerald-50 text-emerald-500 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-colors mb-4">
-                      <Users className="w-8 h-8" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-slate-600">Equipe</span>
-                  </button>
-                  <button onClick={() => openQuickInput(selectedOS.id, 'Outros')} className="flex flex-col items-center p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all group">
-                    <div className="p-4 bg-slate-100 text-slate-400 rounded-2xl group-hover:bg-slate-400 group-hover:text-white transition-colors mb-4">
-                      <PlusCircle className="w-8 h-8" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-slate-600">Outros</span>
-                  </button>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                  {[
+                    { label: 'Gasolina', icon: Fuel, color: 'amber', cat: 'Combustível' },
+                    { label: 'Material', icon: ShoppingCart, color: 'blue', cat: 'Material' },
+                    { label: 'Equipe', icon: Users, color: 'emerald', cat: 'Mão de Obra' },
+                    { label: 'Almoço', icon: Utensils, color: 'rose', cat: 'Alimentação' },
+                    { label: 'Lanche', icon: Coffee, color: 'orange', cat: 'Alimentação' },
+                    { label: 'Avulso', icon: PlusCircle, color: 'slate', cat: 'Outros', isCustom: true },
+                  ].map((btn, i) => (
+                    <button 
+                      key={i} onClick={() => openQuickInput(selectedOS.id, btn.cat, btn.isCustom)} 
+                      className="flex flex-col items-center p-5 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all group"
+                    >
+                      <div className={`p-3 bg-${btn.color}-50 text-${btn.color}-500 rounded-2xl group-hover:bg-${btn.color}-500 group-hover:text-white transition-colors mb-3`}>
+                        <btn.icon className="w-6 h-6" />
+                      </div>
+                      <span className="text-[9px] font-black uppercase text-slate-600">{btn.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -195,8 +198,7 @@ const ServiceOrders: React.FC = () => {
                   <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.2em]">Registrar faturamento total da obra</p>
                 </div>
                 <button 
-                  onClick={handleQuitarObra}
-                  disabled={isPaid}
+                  onClick={handleQuitarObra} disabled={isPaid}
                   className="w-full md:w-auto px-10 py-5 bg-white text-blue-600 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-blue-50 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3 z-10"
                 >
                   <CheckCheck className="w-5 h-5" /> {isPaid ? "OBRA QUITADA" : "QUITAR SALDO AGORA"}
@@ -209,17 +211,17 @@ const ServiceOrders: React.FC = () => {
                     <div className="flex items-center gap-4 mb-10">
                       <div className="p-4 bg-blue-500 rounded-3xl shadow-xl"><Scale className="w-10 h-10" /></div>
                       <div>
-                        <h3 className="text-3xl font-black tracking-tighter uppercase">Partilha Sociedade</h3>
+                        <h3 className="text-3xl font-black tracking-tighter uppercase">Divisão de Lucro</h3>
                         <p className="text-slate-400 text-[10px] uppercase font-black tracking-widest">Lucro Líquido 50/50</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 flex flex-col justify-center">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">LUCRO TOTAL DA OBRA</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">LUCRO TOTAL</p>
                         <p className="text-4xl font-black tracking-tighter text-emerald-400">{formatCurrency(profit)}</p>
                       </div>
                       <div className="bg-blue-600 p-8 rounded-[2.5rem] shadow-xl flex flex-col justify-center">
-                        <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-2">PARTE DE CADA SÓCIO</p>
+                        <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-2">CADA SÓCIO</p>
                         <p className="text-4xl font-black tracking-tighter">{formatCurrency(profit / 2)}</p>
                       </div>
                     </div>
@@ -246,40 +248,29 @@ const ServiceOrders: React.FC = () => {
                </div>
             </div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">OPÇÕES</h4>
-              <button 
-                onClick={() => { if(confirm('Excluir esta OS permanentemente?')) { deleteOS(selectedOS.id); setView('LIST'); } }}
-                className="w-full p-4 bg-rose-50 text-rose-500 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-rose-100 transition-all"
-              >
-                Excluir Registro
-              </button>
-            </div>
+            <button 
+              onClick={() => { if(confirm('Excluir esta OS permanentemente?')) { deleteOS(selectedOS.id); setView('LIST'); } }}
+              className="w-full p-4 bg-rose-50 text-rose-500 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-rose-100 transition-all border border-rose-100"
+            >
+              Excluir Registro
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  const filteredOS = serviceOrders.filter(os => showArchived ? os.archived : !os.archived);
-
   return (
     <div className="space-y-8 animate-in fade-in duration-300 pb-32">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">{showArchived ? 'Histórico de Obras' : 'Obras em Aberto'}</h3>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Gestão de {filteredOS.length} registros</p>
+          <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase leading-none">Obras Ativas</h3>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-2">Acompanhamento e Custos</p>
         </div>
-        <button 
-          onClick={() => setShowArchived(!showArchived)}
-          className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border shadow-lg ${showArchived ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border-slate-200'}`}
-        >
-          <Archive className="w-5 h-5" /> {showArchived ? 'Ativas' : 'Arquivo'}
-        </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-        {filteredOS.map(os => (
+        {serviceOrders.map(os => (
           <div 
             key={os.id} 
             onClick={() => { setSelectedOSId(os.id); setView('DETAIL'); }} 
@@ -306,14 +297,14 @@ const ServiceOrders: React.FC = () => {
             
             <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-widest group-hover:bg-blue-600 group-hover:text-white transition-colors duration-500">
               <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {new Date(os.createdAt).toLocaleDateString()}</span>
-              <div className="flex items-center gap-1">DETALHES <ChevronRight className="w-4 h-4" /></div>
+              <div className="flex items-center gap-1">VER DETALHES <ChevronRight className="w-4 h-4" /></div>
             </div>
           </div>
         ))}
-        {filteredOS.length === 0 && (
+        {serviceOrders.length === 0 && (
           <div className="col-span-full py-24 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center">
             <ClipboardList className="w-16 h-16 text-slate-100 mb-6" />
-            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Nenhuma obra cadastrada</p>
+            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Nenhuma obra em execução</p>
           </div>
         )}
       </div>
